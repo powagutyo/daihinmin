@@ -62,7 +62,8 @@ public class MonteCalro {
 	 * @param md
 	 *            MyData
 	 */
-	private Meld play(BotSkeleton bs, MyData md, FieldData fd, MakeHand mh, WeightData wd) {
+	private Meld play(BotSkeleton bs, MyData md, FieldData fd, MakeHand mh,
+			WeightData wd) {
 
 		ArrayList<MeldData> arrayListMelds = searchOfMeld(bs);// 出せる役を探索
 
@@ -136,7 +137,9 @@ public class MonteCalro {
 
 					if (!placeMeldData.isHaveChildren()) {// 場に出したMeldDataが子ノードを持っていない時
 						// 木を成長させるかの判定
-						if (placeMeldData.getN() >= InitSetting.THRESHOLD - 1 && placeMeldData.isSearchChildren() && !growUpChildren) { // 木を成長させる時
+						if (placeMeldData.getN() >= InitSetting.THRESHOLD - 1
+								&& placeMeldData.isSearchChildren()
+								&& !growUpChildren) { // 木を成長させる時
 							growUpChildren = true;
 							childGf = new GameField(gf);
 						}
@@ -144,13 +147,13 @@ public class MonteCalro {
 						gf.useSimulationBarancing(InitSetting.learning, wd);
 
 					} else {// 子ノードを持っている時
-						putRandom = getUCBRandomMeldData(placeMeldData
-								.getChildren(), gf, wd);
+						putRandom = getUCBRandomMeldData(
+								placeMeldData.getChildren(), gf, wd);
 
 						meldDataOrder.add(putRandom);// 木の通った順番を記憶する
 
-						placeMeldData = placeMeldData
-								.getChildren().get(putRandom);// 場のMeldDataのコピー
+						placeMeldData = placeMeldData.getChildren().get(
+								putRandom);// 場のMeldDataのコピー
 						gf.renewPlace_MeldData(placeMeldData);
 					}
 				} else {// 最初の一回目の時
@@ -168,7 +171,8 @@ public class MonteCalro {
 
 				if (gf.checkGoalPlayer()) { // 上がった人の判定
 					if (InitSetting.DEBUGMODE)
-						System.out.println("時間は" + (System.currentTimeMillis() - start) + "ms");
+						System.out.println("時間は"
+								+ (System.currentTimeMillis() - start) + "ms");
 
 					break;// 自分上がった時
 
@@ -180,8 +184,8 @@ public class MonteCalro {
 			}
 
 			oneGameUpdate(arrayListMelds, playout, gf, meldDataOrder); // 得点などの状態の処理
-			//Weightの学習率の変更
-		//	learning = learning * 0.99;
+			// Weightの学習率の変更
+			// learning = learning * 0.99;
 			/** ここから木を成長させる **/
 			if (growUpChildren) {
 
@@ -195,7 +199,11 @@ public class MonteCalro {
 				while (true) {
 
 					for (int i = 0; i < size; i++) {
-						placeMeldData.addChildren(new MeldData(childGf.getPair().get(i).clone()), childGf.getTurnPlayer(), childGf.getWonPlayer());
+						placeMeldData
+								.addChildren(new MeldData(childGf.getPair()
+										.get(i).clone()),
+										childGf.getTurnPlayer(),
+										childGf.getWonPlayer());
 					}
 					if (size == 1 && childGf.getPair().get(0)[0] == 256) {// PASSしかない時
 						childGf.turnPLayerDoPass();
@@ -219,7 +227,7 @@ public class MonteCalro {
 
 		}
 
-		// 実際に出す手を返している
+		// 実際に出す手を返す
 		double point = -1024;
 		int resultPos = 0;
 		double x = 0;
@@ -263,13 +271,15 @@ public class MonteCalro {
 		}
 		arrayListMelds.get(order.get(0)).updateData(point, order);// 子ノードのデータを更新
 	}
+
 	/***
 	 * UCBの計算データから
 	 *
 	 * @param array
 	 * @return
 	 */
-	private int getUCBRandomMeldData(ArrayList<MeldData> array, GameField gf, WeightData wd) {
+	private int getUCBRandomMeldData(ArrayList<MeldData> array, GameField gf,
+			WeightData wd) {
 		int size = array.size();
 		if (size == 1)
 			return 0;
@@ -277,46 +287,56 @@ public class MonteCalro {
 		double result = 0.0;
 		int pos = 0;
 		double[] points = new double[size];
-		int grade = 0;
-		boolean reverse = false;
-		int authenticationCode = 0;
-		double[] weight = new double[size];
-		double[] d;
 		MeldData md = null;
-		boolean doWeight = false;
-		
-		if (InitSetting.putHandMode == 2 && !gf.isReverse()) {
-			grade = gf.getGrade()[gf.getTurnPlayer()];
-			reverse = gf.isReverse();
-			authenticationCode = gf.getAuthenticationCode_i();
-		}
+		boolean reverse = gf.isReverse(); // 革命か否か
 
-		for (int i = 0; i < size; i++) {// すべての評価値を足し合わせる
-			md = array.get(i);
-			points[i] += md.getUCB();
-			if (InitSetting.putHandMode == 2 && !gf.isReverse()) {// 重みを用いる場合の判定
-				d = wd.getWeight(grade, reverse, authenticationCode);
-				weight[i] = Caluculater.calcPai_sita(d, gf.getWeight(md.getCards()));
-				if(weight[i] != 0)
-					doWeight =true;
-			}
-		}
-		if (InitSetting.putHandMode == 2 && !gf.isReverse() && doWeight) {// 重みを用いる場合の判定
-			Caluculater.ratioAB(points, weight, learning);//UCBの値と相互対応
+		if (InitSetting.putHandMode == 2 && !reverse) {// 重みを使う時
+			boolean doWeight = false; // 重みの計算を行うかどうかの判定用
+			boolean first = true; // 重みの計算が最初かどうかの計算
+
+			int grade = 0;
+			int authenticationCode = 0;
+
+			double[] pai_sita = new double[size];
+			int[] weight = new int[InitSetting.WEIGHTNUMBER];
+			double[] sita;// 重みの特徴
+			grade = gf.getGrade()[gf.getTurnPlayer()];// 自分のランク
+			authenticationCode = gf.getAuthenticationCode_i();// 認証コード
+
 			for (int i = 0; i < size; i++) {// すべての評価値を足し合わせる
-				points[i] += (weight[i]);
+				md = array.get(i);
+				points[i] += md.getUCB();
+				sita = wd.getWeight(grade, reverse, authenticationCode);//sitaの読み込み
+				weight = gf.getWeight(weight, md.getCards(), first); //重みの計算
+				pai_sita[i] = Caluculater.calcPai_sita(sita, weight);//pai_Sitaの計算
+				first = false;
+				if (!doWeight && pai_sita[i] != 0)
+					doWeight = true;
+			}
+
+			if (doWeight) {// 重みが存在する時
+				Caluculater.ratioAB(points, pai_sita, learning);// UCBの値と相互対応
+				for (int i = 0; i < size; i++) {// すべての評価値を足し合わせる
+					points[i] += (pai_sita[i]);
+				}
+			}
+			for (int i = 0; i < size; i++) {// すべての評価値を足し合わせる
+				result += points[i];
+			}
+
+		} else {
+			for (int i = 0; i < size; i++) {// すべての評価値を足し合わせる
+				md = array.get(i);
+				points[i] += md.getUCB();
+				result += points[i];
 			}
 		}
 
-		for (int i = 0; i < size; i++) {// すべての評価値を足し合わせる
-			result += points[i];
-		}
-
-		result = result * Math.random(); // ランダムをかけてあげる
+		result = result * Math.random();
 
 		for (int i = 0; i < size; i++) {
 			result = result - points[i];
-			if (result <= 0) {// resultが0以下になった手を返してあげる
+			if (result <= 0) {// resultが0以下の場所を次の手
 				pos = i;
 				break;
 			}
@@ -449,7 +469,8 @@ public class MonteCalro {
 			if (lockSuits != Suits.EMPTY_SUITS) {
 				jokerGroupMelds = jokerGroupMelds.extract(Melds
 						.suitsOf(lockSuits));
-				notJokerGroupMelds = notJokerGroupMelds.extract(Melds.suitsOf(lockSuits));
+				notJokerGroupMelds = notJokerGroupMelds.extract(Melds
+						.suitsOf(lockSuits));
 			}
 
 			if (jokerGroupMelds != Melds.EMPTY_MELDS) {// 出せる役がある場合
@@ -467,7 +488,9 @@ public class MonteCalro {
 					size = meld.asCards().size();
 
 					for (int i = 0; i < meldsSize; i++) {
-						if (rank == notJokerGroupMelds.get(i).rank() && size == notJokerGroupMelds.get(i).asCards().size()) {
+						if (rank == notJokerGroupMelds.get(i).rank()
+								&& size == notJokerGroupMelds.get(i).asCards()
+										.size()) {
 							flag = true;
 							break;
 						}

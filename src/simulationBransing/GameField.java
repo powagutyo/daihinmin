@@ -150,11 +150,13 @@ public class GameField {
 		System.arraycopy(gf.getPlaceSuits(), 0, placeSuits, 0, suitsNum);
 		System.arraycopy(gf.getWonPlayer(), 0, wonPlayer, 0, players);
 		System.arraycopy(gf.getPassPlayer(), 0, passPlayer, 0, players);
-		System.arraycopy(gf.getPlayerHandsOfCards(), 0, playerHandsOfCards, 0, players);
+		System.arraycopy(gf.getPlayerHandsOfCards(), 0, playerHandsOfCards, 0,
+				players);
 		System.arraycopy(gf.getFirstWonPlayer(), 0, firstWonPlayer, 0, players);
-		System.arraycopy(gf.getPlayerHands(), 0, playerHands, 0, sumPlayersHands);
-		int num = players * 14;
-		System.arraycopy(gf.getPlayerTypeOfHandsofCards(), 0, playerTypeOfHandsofCards, 0, num);
+		System.arraycopy(gf.getPlayerHands(), 0, playerHands, 0,
+				sumPlayersHands);
+		System.arraycopy(gf.getPlayerTypeOfHandsofCards(), 0,
+				playerTypeOfHandsofCards, 0, players * 14);
 
 		this.sb = gf.getSb();
 	}
@@ -355,11 +357,13 @@ public class GameField {
 		System.arraycopy(gf.getPlaceSuits(), 0, placeSuits, 0, suitsNum);
 		System.arraycopy(gf.getWonPlayer(), 0, wonPlayer, 0, players);
 		System.arraycopy(gf.getPassPlayer(), 0, passPlayer, 0, players);
-		System.arraycopy(gf.getPlayerHandsOfCards(), 0, playerHandsOfCards, 0, players);
+		System.arraycopy(gf.getPlayerHandsOfCards(), 0, playerHandsOfCards, 0,
+				players);
 		System.arraycopy(gf.getFirstWonPlayer(), 0, firstWonPlayer, 0, players);
-		System.arraycopy(gf.getPlayerHands(), 0, playerHands, 0, sumPlayersHands);
-		int num = players * 14;
-		System.arraycopy(gf.getPlayerTypeOfHandsofCards(), 0, playerTypeOfHandsofCards, 0, num);
+		System.arraycopy(gf.getPlayerHands(), 0, playerHands, 0,
+				sumPlayersHands);
+		System.arraycopy(gf.getPlayerTypeOfHandsofCards(), 0,
+				playerTypeOfHandsofCards, 0, players * 14);
 
 	}
 
@@ -959,14 +963,16 @@ public class GameField {
 	 *
 	 * @return
 	 */
-	private void combination(int[] resultMeld, int[] meld, int[] c, int m, int n, int r) {
+	private void combination(int[] resultMeld, int[] meld, int[] c, int m,
+			int n, int r) {
 		if (m <= r) {
 			for (int i = c[m - 1] + 1; i <= n - r + m; i++) {
 				resultMeld[m - 1] = meld[i - 1];
 				c[m] = i;
 				combination(resultMeld, meld, c, m + 1, n, r);
 				if (m == r) {// 配列の最後まで埋まった時
-					if (checkLock_Group(resultMeld) && checkEffecticalJoker(resultMeld, m, r)) {// 縛りをチェックする
+					if (checkLock_Group(resultMeld)
+							&& checkEffecticalJoker(resultMeld, m, r)) {// 縛りをチェックする
 						addMap(resultMeld.clone());
 					}
 				}
@@ -1055,7 +1061,8 @@ public class GameField {
 						if (lock && !lockNumber[j])// 縛りが存在しており、縛られているカードではない場合
 							continue;
 
-						searchSequence(meld, counter, num, cardSize, joker, false, firstPos);// 階段の探索を行う
+						searchSequence(meld, counter, num, cardSize, joker,
+								false, firstPos);// 階段の探索を行う
 					}
 				}
 			}
@@ -1066,7 +1073,8 @@ public class GameField {
 					if (playerHands[turnPlayer * cardNum + num] == 1) {// そのカードを持っている時
 						if (lock && !lockNumber[j])// 縛りが存在しており、縛られているカードではない場合
 							continue;
-						searchSequence(meld, counter, num, cardSize, joker, false, firstPos);// 階段の探索を行う
+						searchSequence(meld, counter, num, cardSize, joker,
+								false, firstPos);// 階段の探索を行う
 					}
 				}
 			}
@@ -1091,8 +1099,8 @@ public class GameField {
 	 *            playerHandsなどの最初の位置を記憶
 	 * @return　resultCounnter
 	 */
-	private void searchSequence(int[] meld, int counter,
-			int num, int size, boolean joker, boolean dojoker, int firstPos) {
+	private void searchSequence(int[] meld, int counter, int num, int size,
+			boolean joker, boolean dojoker, int firstPos) {
 		if (!dojoker) { // jokerを使わな勝った時
 			meld[counter] = num;
 
@@ -1118,8 +1126,7 @@ public class GameField {
 			num--;
 			if (playerHands[firstPos + num] == 1) {// 3より下は見ない
 				meld[counter] = num;
-				searchSequence(meld, counter, num,
-						size, joker, false, firstPos);
+				searchSequence(meld, counter, num, size, joker, false, firstPos);
 			}
 			num++;
 		}
@@ -1394,10 +1401,12 @@ public class GameField {
 		String message = "";
 		/** 自分の手札の枚数 **/
 		if (myHands >= 10) {// サイズの大きさが10以上の時
-			file = new File("./gameRecord/myHand_" + myHands + "_" + grade[mySeat] + ".txt");
+			file = new File("./gameRecord/myHand_" + myHands + "_"
+					+ grade[mySeat] + ".txt");
 			message += myHands;
 		} else {// サイズの大きさが一桁の時
-			file = new File("./gameRecord/myHand_0" + myHands + "_" + grade[mySeat] + ".txt");
+			file = new File("./gameRecord/myHand_0" + myHands + "_"
+					+ grade[mySeat] + ".txt");
 			message += "0" + myHands;
 		}
 
@@ -1621,36 +1630,49 @@ public class GameField {
 	}
 
 	/**
-	 * 重みベクトルの配列を返すメソッド
-	 * 3～joker
-	 * PASS
-	 * 縛りを行える時
-	 * グループが出来るかどうか
-	 * 階段が出来る時(joker抜き)
+	 * 重みベクトルの配列を返すメソッド 3～joker PASS 縛りを行える時 グループが出来るかどうか 階段が出来る時(joker抜き)
 	 * 階段が出来る時(jokerあり)
 	 *
 	 * @return weight
 	 */
-	public int[] getWeight(int[] cards) {
-		int[] weight = new int[InitSetting.WEIGHTNUMBER];
+	public int[] getWeight(int[] weight, int[] cards, boolean first) {
 		int counter = 0;
-
+		if (!first) {
+			int size = -53 * 4 + InitSetting.WEIGHTNUMBER;
+			for(int i= 0;i<size ;i++){
+				weight[i] = 0;
+			}
+		}
 		int size = cards.length;
+		// カードの特性
 		counter = searchTypeOfCards(weight, cards, size, counter);
 		counter = canLock(weight, cards, size, counter);
 		counter = canReverse(weight, cards, size, counter);
 		counter = haveJoker(weight, cards, size, counter);
 		counter = cardsSize(weight, cards, size, counter);
+		// 場の特性 53 * 4
+		if (first) {
+			counter = weightPlaceCards(weight, size, counter);
+		}
 		// counter = setPlaceData_w(weight, size, counter);
-		counter = weightPlaceCards(weight, size, counter);
 		/**
-		 * searchAnotherStateCards(weight, cards, 16, size);
-		 * checkS3(weight, cards, 20, size);
-		 * cardIsStrongest(weight, cards, 21, size);
+		 * searchAnotherStateCards(weight, cards, 16, size); checkS3(weight,
+		 * cards, 20, size); cardIsStrongest(weight, cards, 21, size);
 		 */
 		return weight;
 	}
 
+	/**
+	 * 場の出ていないカード情報と自分の持っているカード情報を重みint[]を更新して返すメソッド
+	 *
+	 * @param weight
+	 *            重み
+	 * @param size
+	 *            カードの枚数
+	 * @param counter
+	 *            重みを入れる最初の場所
+	 * @return weight
+	 */
 	public int weightPlaceCards(int[] weight, int size, int counter) {
 		int num = 0;
 		if (reverse) {
@@ -1662,7 +1684,8 @@ public class GameField {
 		num = num % 2;
 		for (int i = 0; i < cardNum; i++) {
 			if (num == 0) {
-				if (notLookCards[i] == 1 && playerHands[i + cardNum * turnPlayer] == 0) {
+				if (notLookCards[i] == 1
+						&& playerHands[i + cardNum * turnPlayer] == 0) {
 					weight[counter] = 1;
 				}
 				counter++;
@@ -1670,7 +1693,8 @@ public class GameField {
 		}
 		for (int i = 0; i < cardNum; i++) {
 			if (num == 1) {
-				if (notLookCards[i] == 1 && playerHands[i + cardNum * turnPlayer] == 0) {
+				if (notLookCards[i] == 1
+						&& playerHands[i + cardNum * turnPlayer] == 0) {
 					weight[counter] = 1;
 				}
 			}
@@ -1705,14 +1729,13 @@ public class GameField {
 	 * @return
 	 */
 	public int cardsSize(int[] weight, int[] cards, int size, int counter) {
-		if (cards[0] >= 64) {// PASS以外の時
+		if (!(cards[0] >= 64 )) {// PASS以外の時
 			if (size >= 5) {
 				size = 5;
 			}
 			size--;
 			weight[counter - size] = 1;
 		}
-
 		counter += 5;
 		return counter;
 	}
@@ -1727,6 +1750,7 @@ public class GameField {
 	 * @return
 	 */
 	public int haveJoker(int[] weight, int[] cards, int size, int counter) {
+
 		for (int i = 0; i < size; i++) {
 			if (cards[i] == 0) {
 				weight[counter] = 1;
@@ -1746,6 +1770,7 @@ public class GameField {
 	 * @return
 	 */
 	public int setPlaceData_w(int[] weight, int size, int counter) {
+
 		int num = rank;
 		if (!(reverse && rank == num) || (!reverse && num == 0)) {// renewじゃない時
 			if (reverse)
@@ -1778,6 +1803,7 @@ public class GameField {
 	 * @return
 	 */
 	public int canReverse(int[] weight, int[] cards, int size, int counter) {
+
 		if (size >= 4) {
 			if ((cards[0] - 1) % 13 + 1 == (cards[1] - 1) % 13 + 1) {// ペア
 				weight[counter] = 1;
@@ -1802,6 +1828,7 @@ public class GameField {
 	 * @param counter
 	 */
 	public void cardIsStrongest(int[] weight, int[] cards, int counter, int size) {
+
 		if (cards[0] >= 64)// PASS
 			return;
 		int rank = 14;
@@ -1892,7 +1919,8 @@ public class GameField {
 	 *            　出したカード
 	 * @parm counter どこから始めるかどうかの判定用の引数
 	 */
-	public void searchAnotherStateCards(int[] weight, int[] cards, int counter, int size) {
+	public void searchAnotherStateCards(int[] weight, int[] cards, int counter,
+			int size) {
 		if (cards[0] >= 64)
 			return;
 		boolean joker = false;
@@ -1943,7 +1971,8 @@ public class GameField {
 	 * @param cards
 	 *            　カード
 	 */
-	public int searchTypeOfCards(int[] weight, int[] cards, int size, int counter) {
+	public int searchTypeOfCards(int[] weight, int[] cards, int size,
+			int counter) {
 
 		int rank = 0;// カードのランク
 
@@ -2038,13 +2067,15 @@ public class GameField {
 		boolean result = false;
 		if (rank + 1 < 14 && playerHands[turnPlayer * cardNum + card + 1] >= 1) {
 			counter++;
-			if (rank + 2 < 14 && playerHands[turnPlayer * cardNum + card + 2] >= 1) {
+			if (rank + 2 < 14
+					&& playerHands[turnPlayer * cardNum + card + 2] >= 1) {
 				counter++;
 			}
 		}
 		if (rank - 1 > 0 && playerHands[turnPlayer * cardNum + card - 1] >= 1) {
 			counter++;
-			if (rank - 2 > 0 && playerHands[turnPlayer * cardNum + card - 2] >= 1) {
+			if (rank - 2 > 0
+					&& playerHands[turnPlayer * cardNum + card - 2] >= 1) {
 				counter++;
 			}
 		}
