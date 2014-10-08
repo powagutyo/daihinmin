@@ -38,6 +38,8 @@ public class SimulationBalancing {
 	private final int meanGradientNumber = 100;
 	/** 学習率 **/
 	private final int arufa = 1;
+	/** 重みを格納用のメソッド **/
+	int[] weight = new int[InitSetting.WEIGHTNUMBER]; //重み
 
 	/**
 	 * 学習の準備を行うメソッド
@@ -233,7 +235,6 @@ public class SimulationBalancing {
 	public int putHand(Map<Integer, int[]> map, GameField gf) {
 		int size = map.size();
 		double[] points = new double[size];
-		int[] weight = new int[InitSetting.WEIGHTNUMBER];
 		double result = 0;
 		double sum = 0;
 		boolean first = true;
@@ -296,8 +297,6 @@ public class SimulationBalancing {
 		int size = map.size();
 		double[] result = new double[weightNumber];
 		double[] points = new double[size];
-		int[] weight = new int[InitSetting.WEIGHTNUMBER];
-
 		double pai_Sita = 0;
 		double sum = 0;
 		double num = 0;
@@ -367,7 +366,6 @@ public class SimulationBalancing {
 		int size = map.size();
 
 		double[] points = new double[size];
-		int[] weight = new int[InitSetting.WEIGHTNUMBER]; //重み
 		double[] sita; //重みの特徴ベクトル
 		double pai_Sita = 0;
 		double sum = 0;

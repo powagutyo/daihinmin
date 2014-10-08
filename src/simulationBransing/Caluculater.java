@@ -116,8 +116,8 @@ public class Caluculater {
 		 * UCBの計算式
 		 */
 		UCB = winPro + Math.sqrt(num * logn);
-		if (Double.isNaN(UCB))
-			System.out.println();
+
+
 		return UCB;
 	}
 }

@@ -45,10 +45,8 @@ public class MeldData implements Cloneable {
 	private ArrayList<MeldData> children = null;
 	/** 出したカードの集合 **/
 	private int[] cards;
-	/**何で勝ったかを記憶する変数***/
+	/** 何で勝ったかを記憶する変数 ***/
 	private int[] winNum;
-
-
 
 	/** 学習率α **/
 	private final double alpha = 1.0;
@@ -77,7 +75,7 @@ public class MeldData implements Cloneable {
 			this.cards[counter] = num;
 			counter++;
 		}
-		winNum =new int[5];
+		winNum = new int[5];
 		point = 0;
 		UCB = 0.1;
 		isParent = true;
@@ -100,7 +98,7 @@ public class MeldData implements Cloneable {
 
 			}
 		}
-		winNum =new int[5];
+		winNum = new int[5];
 		this.cards = cards.clone();
 		point = 0;
 	}
@@ -126,8 +124,11 @@ public class MeldData implements Cloneable {
 
 		this.children = md.getChildren();
 
-		this.cards = md.getCards().clone();
-		this.winNum = md.winNum.clone();
+		int[] copyCards = md.getCards();
+
+		System.arraycopy(copyCards, 0, this.cards, 0, copyCards.length);
+		System.arraycopy(md.getWinNum(), 0, this.winNum, 0, 5);
+
 	}
 
 	/**
@@ -142,7 +143,7 @@ public class MeldData implements Cloneable {
 		meld = PASS;
 		cards = new int[1];
 		cards[0] = 256;
-		winNum =new int[5];
+		winNum = new int[5];
 	}
 
 	public void init(boolean[] firstWonPlayer) {
@@ -176,17 +177,6 @@ public class MeldData implements Cloneable {
 	}
 
 	/**
-	 * クローンメソッド 完全でないことに注意
-	 */
-	public MeldData clone() {
-		try {
-			return (MeldData) super.clone();
-		} catch (CloneNotSupportedException e) {
-			throw new InternalError(e.toString());
-		}
-	}
-
-	/**
 	 * データの更新を行うメソッド
 	 *
 	 * @param point
@@ -198,7 +188,7 @@ public class MeldData implements Cloneable {
 
 		if (haveChildren) {// 子供を持っている場合
 			int size = orderT.size() - 1;
-				upDateChild(point, orderT, 1, size, this);// 子ノードすべてのデータを更新
+			upDateChild(point, orderT, 1, size, this);// 子ノードすべてのデータを更新
 
 		}
 
@@ -213,7 +203,7 @@ public class MeldData implements Cloneable {
 	public void updateData(int point) {
 		n++;
 		this.point += point;
-		winNum[point-1]++;
+		winNum[point - 1]++;
 	}
 
 	/***
@@ -232,14 +222,10 @@ public class MeldData implements Cloneable {
 	public void upDateChild(int point, ArrayList<Integer> orderT, int depth,
 			int maxDepth, MeldData myMeldData) {
 
-		if(maxDepth >= depth){
-			//TODO 直し
-			if(myMeldData.isHaveChildren())
-				//System.out.println();
+		if (depth > maxDepth || !myMeldData.isHaveChildren() ) {
 			return;
 		}
-		if (!myMeldData.isHaveChildren()) // 子供を持っていない場合
-			return;// 更新しない
+
 		int num = orderT.get(depth);
 
 		myMeldData.getChildren().get(num).updateData(point); // ここで選ばれた木のデータを更新する
@@ -359,7 +345,8 @@ public class MeldData implements Cloneable {
 	 *
 	 * @param md
 	 */
-	public void addChildren(MeldData md, int turnPlayer, boolean[] firstWonPLayer) {
+	public void addChildren(MeldData md, int turnPlayer,
+			boolean[] firstWonPLayer) {
 		if (children == null) {
 			children = new ArrayList<MeldData>(64);
 			this.haveChildren = true;
@@ -391,7 +378,6 @@ public class MeldData implements Cloneable {
 		return win;
 	}
 
-
 	public int getPoint() {
 		return point;
 	}
@@ -411,7 +397,6 @@ public class MeldData implements Cloneable {
 	public int getPlayerNum() {
 		return playerNum;
 	}
-
 
 	public int getSize() {
 		return size;
@@ -481,9 +466,11 @@ public class MeldData implements Cloneable {
 	public void setPassOnly(boolean passOnly) {
 		PassOnly = passOnly;
 	}
+
 	public int[] getWinNum() {
 		return winNum;
 	}
+
 	public void setUCB(double UCB) {
 		this.UCB = UCB;
 	}

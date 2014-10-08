@@ -183,6 +183,52 @@ public class GameField {
 	}
 
 	/**
+	 *
+	 * @param copyHands
+	 *            自分の手札群
+	 */
+	public void initPLaceGameFiled(int[] copyHands) {
+		setPlayerHands(copyHands);
+
+		setPlayerTypeOfHandsofCards(getTypeOfHandsOfCards());// 自分と相手のカードランクの枚数を計算する。
+
+		initNotLookCard();// 場に出ているカード以外を格納
+
+		initFirstGF();
+	}
+
+	/**
+	 * プレイヤーごとに種類別に分けたカードの枚数を返す
+	 *
+	 * @return　種類別に分けたカードの枚数を返す
+	 */
+	private int[] getTypeOfHandsOfCards() {
+		int num = players * 14;
+		int[] result = new int[num];
+
+		int counter = 0;// カードの枚数をカウントする
+		// 探索部分
+		for (int i = 0; i < players; i++) {
+			for (int j = 0; j < 14; j++) {// カードの数字の枚数
+				num = i * cardNum + j;
+				if (j != 0) {// 普通のカードの処理
+					for (int l = 0; l < 4; l++) {// カードの種類
+						if (playerHands[num + (l * 13)] == 1)// もしカードが存在する時
+							counter++;
+					}
+				} else {// jokerの時の処理
+					if (playerHands[num] == 1) {// jokerを持っている時
+						counter++;
+					}
+				}
+				result[i * 14 + j] = counter;// 枚数記憶させる
+				counter = 0;
+			}
+		}
+		return result;
+	}
+
+	/**
 	 * 棋譜データを復元するメソッド
 	 *
 	 * @param 棋譜データ
@@ -595,7 +641,7 @@ public class GameField {
 			} else {
 				turnPlayer = putLastPlayer;
 			}
-		} else {// それ以外
+		} else {// renew以外
 			turnPlayer++;
 			if (turnPlayer >= players)// プレイヤーの人数把握
 				turnPlayer = 0;
@@ -617,18 +663,34 @@ public class GameField {
 		updateTurnPlayer(); // ターンプレイヤーの更新
 	}
 
+	/**
+	 * 8切り出来るかどうかの判定
+	 *
+	 * @return
+	 */
 	public boolean checkEight() {
 		boolean result = false;
 		if (state != State.SEQUENCE) { // 階段以外の時
 			if (rank == 6)
 				result = true;
 		} else {
+			int num = rank;
 			if (!reverse) {// 革命じゃない時
-				if (rank - 1 + numberOfCardSize >= 6)
-					result = true;
+				for (int i = 0; i < numberOfCardSize; i++) {
+					if(num == 6){//8のカードの時
+						result = true;
+						break;
+					}
+					num++;
+				}
 			} else {// 革命の時
-				if (rank + 1 - numberOfCardSize <= 6)
-					result = true;
+				for (int i = 0; i < numberOfCardSize; i++) {
+					if(num == 6){//8のカードの時
+						result = true;
+						break;
+					}
+					num--;
+				}
 			}
 		}
 		return result;
@@ -642,10 +704,9 @@ public class GameField {
 	 */
 	public void updatePlace(int[] putHand) {
 
-		int size = putHand.length;
 		int num = 0;
 		// カードサイズの更新
-		numberOfCardSize = size;
+		numberOfCardSize = putHand.length;
 		// 最後に出した人の更新
 		putLastPlayer = turnPlayer; // 最後に出した人を更新
 
@@ -655,7 +716,7 @@ public class GameField {
 
 			boolean joker = false;
 			// マークの探索
-			for (int i = 0; i < size; i++) {
+			for (int i = 0; i < numberOfCardSize; i++) {
 				num = putHand[i];
 				if (num == 0) {// jokerの時の処理
 					joker = true;
@@ -679,7 +740,7 @@ public class GameField {
 				boolean[] cloneLock = new boolean[4];
 				// 今の役のマークを格納する
 				boolean joker = false;
-				for (int i = 0; i < size; i++) {
+				for (int i = 0; i < numberOfCardSize; i++) {
 					if (putHand[i] == 0) {
 						joker = true;
 						continue;
@@ -719,8 +780,12 @@ public class GameField {
 				rank = 0;
 			}
 		} else {
-			if (putHand[0] != 0) {
-				rank = (putHand[0] - 1) % 13 + 1;
+			if (putHand[0] != 0) { // joker含みの階段とペアの判定
+				if (state == State.SEQUENCE) {
+					rank = (putHand[1] - 1) % 13;
+				} else {
+					rank = (putHand[0] - 1) % 13 + 1;
+				}
 			} else {
 				rank = (putHand[1] - 1) % 13 + 1;
 			}
@@ -739,12 +804,10 @@ public class GameField {
 			num = putHand[i];
 			notLookCards[num] = 0;
 			playerHands[turnPlayer * cardNum + num] = 0;
-
 			if (num != 0) {// jokerの時の処理
 				num = (num - 1) % 13 + 1;
 			}
 			playerTypeOfHandsofCards[turnPlayer * 14 + num]--;
-
 		}
 		playerHandsOfCards[turnPlayer] -= numberOfCardSize;
 	}
@@ -759,12 +822,12 @@ public class GameField {
 	 */
 	private State getState(int[] putHand) {
 		int size = putHand.length;
-		int x = 0;
-		int y = 0;
 		State r = State.EMPTY;
 		if (size == 1) {// カードが一枚の時
 			r = State.SINGLE;
 		} else {
+			int x = 0;
+			int y = 0;
 			if (size == 2) {// カードが2枚の時
 				r = State.GROUP;
 			} else {// カードが3枚以上の時
@@ -787,7 +850,6 @@ public class GameField {
 				}
 			}
 		}
-
 		return r;
 	}
 
@@ -826,7 +888,6 @@ public class GameField {
 	 * @return 出せるすべての役
 	 */
 	private void searchSingleMeld() {
-
 		// スペ3の判定
 		if (state != State.RENEW && (rank == 14 || rank == 0)) {// JOKERが場に出されている時
 			if (playerHands[turnPlayer * cardNum + 1] == 1) { // スぺ3を持っている時
@@ -878,7 +939,7 @@ public class GameField {
 	private void searchGroupMeld(int size) {
 		int[] meld = new int[size];// ひとつの役
 		int[] c = new int[size + 1];
-		// 配列の初期化
+		int[] conbine = new int[5];// カード枚数
 
 		boolean joker = false; // jokerを持っているかどうか
 		int jk = 0;// ジョーカーの枚数分足すための変数
@@ -892,7 +953,6 @@ public class GameField {
 
 		int num = 0;
 		int x = 0;// 計算用の変数
-		int[] conbine = new int[5];// カード枚数
 		for (int l = 0; l < 5; l++) {
 			conbine[l] = 512;// ありえない数
 		}
@@ -912,7 +972,6 @@ public class GameField {
 							counter++;
 						}
 					}
-
 					combination(meld, conbine, c, 1, num, size);
 				}
 			}
@@ -1060,7 +1119,6 @@ public class GameField {
 					if (playerHands[firstPos + num] == 1) {// そのカードを持っている時
 						if (lock && !lockNumber[j])// 縛りが存在しており、縛られているカードではない場合
 							continue;
-
 						searchSequence(meld, counter, num, cardSize, joker,
 								false, firstPos);// 階段の探索を行う
 					}
@@ -1639,7 +1697,7 @@ public class GameField {
 		int counter = 0;
 		if (!first) {
 			int size = -53 * 4 + InitSetting.WEIGHTNUMBER;
-			for(int i= 0;i<size ;i++){
+			for (int i = 0; i < size; i++) {
 				weight[i] = 0;
 			}
 		}
@@ -1649,7 +1707,8 @@ public class GameField {
 		counter = canLock(weight, cards, size, counter);
 		counter = canReverse(weight, cards, size, counter);
 		counter = haveJoker(weight, cards, size, counter);
-		counter = cardsSize(weight, cards, size, counter);
+		// counter = cardsSize(weight, cards, size, counter);
+		counter += 5;
 		// 場の特性 53 * 4
 		if (first) {
 			counter = weightPlaceCards(weight, size, counter);
@@ -1729,7 +1788,7 @@ public class GameField {
 	 * @return
 	 */
 	public int cardsSize(int[] weight, int[] cards, int size, int counter) {
-		if (!(cards[0] >= 64 )) {// PASS以外の時
+		if (!(cards[0] >= 64)) {// PASS以外の時
 			if (size >= 5) {
 				size = 5;
 			}

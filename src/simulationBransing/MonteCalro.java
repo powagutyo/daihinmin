@@ -37,9 +37,9 @@ public class MonteCalro {
 
 	private final int cardNum = 53;// カード大きさ
 
-	private int mySeat = 0;
+	private int mySeat = 0;// 自分の座席番号
 
-	double learning;
+	private double learning = 0.0;
 
 	/**
 	 * モンテカルロの実行メソッド
@@ -78,31 +78,9 @@ public class MonteCalro {
 
 		GameField gf = new GameField(players, bs, fd, md);
 
-		// GameField cloneGF = null;
-
-		/** 変数の初期化終了 **/
-
 		int putRandom = 0; // 最初に出す手をランダムに選ぶ
 
 		boolean first = true; // 1回目の時だけ自分の役集合から出すので特殊である。
-
-		for (int i = 0; i < arraySize; i++) {// UCBの値を初期化させる
-			arrayListMelds.get(i).setTurnPlayer(mySeat); // 自分の順番にする
-			arrayListMelds.get(i).initUCB(gf.getFirstWonPlayer());
-		}
-
-		/** MeldDataの出した順番を格納する 最後のサイズはそれ以上木が作られることがないため **/
-		ArrayList<Integer> meldDataOrder = new ArrayList<Integer>(1024);
-
-		MeldData placeMeldData = null;
-
-		gf.setPlayerHands(copyPlayerHands(mh.getPlayersHands()));
-
-		gf.setPlayerTypeOfHandsofCards(getTypeOfHandsOfCards(gf
-				.getPlayerHands()));// 自分と相手のカードランクの枚数を計算する。
-		gf.initNotLookCard();// 場に出ているカード以外を格納
-
-		gf.initFirstGF();
 
 		boolean growUpChildren = false;
 
@@ -110,12 +88,29 @@ public class MonteCalro {
 
 		int size = 0;
 
+		long start;
+
+		/** MeldDataの出した順番を格納する 最後のサイズはそれ以上木が作られることがないため **/
+		ArrayList<Integer> meldDataOrder = new ArrayList<Integer>(256);
+
+		MeldData placeMeldData = null;
+
+		/** 変数の初期化終了 **/
+
+		for (int i = 0; i < arraySize; i++) {// UCBの値を初期化させる
+			arrayListMelds.get(i).setTurnPlayer(mySeat); // 自分の順番にする
+			arrayListMelds.get(i).initUCB(gf.getFirstWonPlayer());
+		}
+
+		gf.initPLaceGameFiled(copyPlayerHands(mh.getPlayersHands()));//gfの場のカード情報とfirstGFの初期化
+
 		// メインループ
 		for (int playout = 1; playout <= count; playout++) {
+
 			if (InitSetting.DEBUGMODE) {
 				System.out.println("playout" + playout);
 			}
-			long start = System.currentTimeMillis();
+			start = System.currentTimeMillis();
 
 			gf.firstClone();// gfを最初の状態に戻す
 
@@ -129,7 +124,7 @@ public class MonteCalro {
 
 			size = 0;
 
-			learning = 0.0;
+			learning = InitSetting.learning_w;
 
 			while (true) { // 1プレイ分のループ
 
@@ -167,6 +162,7 @@ public class MonteCalro {
 
 					gf.renewPlace_MeldData(placeMeldData);
 
+					first = false;
 				}
 
 				if (gf.checkGoalPlayer()) { // 上がった人の判定
@@ -179,20 +175,15 @@ public class MonteCalro {
 				}
 				gf.endTurn();// ターン等々の処理
 
-				first = false;// 最初の一回目じゃなくする
-
 			}
-
 			oneGameUpdate(arrayListMelds, playout, gf, meldDataOrder); // 得点などの状態の処理
 			// Weightの学習率の変更
-			// learning = learning * 0.99;
-			/** ここから木を成長させる **/
+			learning = learning * 0.99;
+			/** 木の成長部分 **/
+
 			if (growUpChildren) {
 
-				// ArrayList<MeldData> children = new ArrayList<MeldData>();//
-				// 出せる子ノードを格納する場所
-
-				childGf.getPutHand(); // 出せる手の候補が返ってくる
+				childGf.getPutHand(); // 出せる手の候補を探索
 
 				size = childGf.getPair().size();
 
@@ -217,6 +208,7 @@ public class MonteCalro {
 						size = childGf.getPair().size();
 
 						placeMeldData = placeMeldData.getChildren().get(0); // PASSの子供に変更する
+
 					} else {
 
 						break;
@@ -306,9 +298,9 @@ public class MonteCalro {
 			for (int i = 0; i < size; i++) {// すべての評価値を足し合わせる
 				md = array.get(i);
 				points[i] += md.getUCB();
-				sita = wd.getWeight(grade, reverse, authenticationCode);//sitaの読み込み
-				weight = gf.getWeight(weight, md.getCards(), first); //重みの計算
-				pai_sita[i] = Caluculater.calcPai_sita(sita, weight);//pai_Sitaの計算
+				sita = wd.getWeight(grade, reverse, authenticationCode);// sitaの読み込み
+				weight = gf.getWeight(weight, md.getCards(), first); // 重みの計算
+				pai_sita[i] = Caluculater.calcPai_sita(sita, weight);// pai_Sitaの計算
 				first = false;
 				if (!doWeight && pai_sita[i] != 0)
 					doWeight = true;
@@ -361,37 +353,6 @@ public class MonteCalro {
 			}
 		}
 
-		return result;
-	}
-
-	/**
-	 * プレイヤーごとに種類別に分けたカードの枚数を返す
-	 *
-	 * @return　種類別に分けたカードの枚数を返す
-	 */
-	private int[] getTypeOfHandsOfCards(int[] array) {
-		int num = players * 14;
-		int[] result = new int[num];
-
-		int counter = 0;// カードの枚数をカウントする
-		// 探索部分
-		for (int i = 0; i < players; i++) {
-			for (int j = 0; j < 14; j++) {// カードの数字の枚数
-				num = i * cardNum + j;
-				if (j != 0) {// 普通のカードの処理
-					for (int l = 0; l < 4; l++) {// カードの種類
-						if (array[num + (l * 13)] == 1)// もしカードが存在する時
-							counter++;
-					}
-				} else {// jokerの時の処理
-					if (array[num] == 1) {// jokerを持っている時
-						counter++;
-					}
-				}
-				result[i * 14 + j] = counter;// 枚数記憶させる
-				counter = 0;
-			}
-		}
 		return result;
 	}
 
