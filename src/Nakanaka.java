@@ -1,11 +1,44 @@
 
-import static jp.ac.uec.daihinmin.card.MeldFactory.PASS;
+import static jp.ac.uec.daihinmin.card.MeldFactory.*;
+
 import java.util.ArrayList;
-import jp.ac.uec.daihinmin.*;
-import jp.ac.uec.daihinmin.card.*;
-import jp.ac.uec.daihinmin.player.*;
-import jp.ac.hosei.daihinmin.fujita2.*;
-import jp.ac.hosei.daihinmin.fujita2.strategy.*;
+
+import jp.ac.hosei.daihinmin.fujita2.MeldSet;
+import jp.ac.hosei.daihinmin.fujita2.State;
+import jp.ac.hosei.daihinmin.fujita2.Utils;
+import jp.ac.hosei.daihinmin.fujita2.strategy.AllPassStrategy;
+import jp.ac.hosei.daihinmin.fujita2.strategy.AverageStrategy;
+import jp.ac.hosei.daihinmin.fujita2.strategy.DaihinminStrategy;
+import jp.ac.hosei.daihinmin.fujita2.strategy.FittingStrategy;
+import jp.ac.hosei.daihinmin.fujita2.strategy.FugouStrategy;
+import jp.ac.hosei.daihinmin.fujita2.strategy.GiveUpStrategy;
+import jp.ac.hosei.daihinmin.fujita2.strategy.HeiminStrategy;
+import jp.ac.hosei.daihinmin.fujita2.strategy.HinminStrategy;
+import jp.ac.hosei.daihinmin.fujita2.strategy.KeepSequenceStrategy;
+import jp.ac.hosei.daihinmin.fujita2.strategy.LastStrategy;
+import jp.ac.hosei.daihinmin.fujita2.strategy.LastTwoStrategy;
+import jp.ac.hosei.daihinmin.fujita2.strategy.LessThanHalfStrategy;
+import jp.ac.hosei.daihinmin.fujita2.strategy.LessThanThreeCardsStrategy;
+import jp.ac.hosei.daihinmin.fujita2.strategy.LockedStrategy;
+import jp.ac.hosei.daihinmin.fujita2.strategy.LockingStrategy;
+import jp.ac.hosei.daihinmin.fujita2.strategy.MeldCalculationStrategy;
+import jp.ac.hosei.daihinmin.fujita2.strategy.NoCandidateStrategy;
+import jp.ac.hosei.daihinmin.fujita2.strategy.RemoveJokerMoreThanThreeStrategy;
+import jp.ac.hosei.daihinmin.fujita2.strategy.RenewStrategy;
+import jp.ac.hosei.daihinmin.fujita2.strategy.RevolutionStrategy;
+import jp.ac.hosei.daihinmin.fujita2.strategy.Strategy;
+import jp.ac.hosei.daihinmin.fujita2.strategy.UseSpade3Strategy;
+import jp.ac.hosei.daihinmin.fujita2.strategy.YomikiriStrategy;
+import jp.ac.uec.daihinmin.Order;
+import jp.ac.uec.daihinmin.PlayersInformation;
+import jp.ac.uec.daihinmin.Rules;
+import jp.ac.uec.daihinmin.card.Card;
+import jp.ac.uec.daihinmin.card.Cards;
+import jp.ac.uec.daihinmin.card.Meld;
+import jp.ac.uec.daihinmin.card.MeldFactory;
+import jp.ac.uec.daihinmin.card.Melds;
+import jp.ac.uec.daihinmin.card.Rank;
+import jp.ac.uec.daihinmin.player.BotSkeleton;
 
 //import javax.swing.JOptionPane;
 
@@ -15,13 +48,13 @@ public final class Nakanaka extends BotSkeleton {
 	 * 場の状況を管理するオブジェクト
 	 */
 	public State state;
-	
+
 	private int[] points = new int[5];
 	private int point;
 	private int game = 0;
 	private int[][] wins = new int[5][5000];
 	private int[][][] wins2 = new int[5][5][5];
-	
+
 	private Meld last;
 
 	/**
@@ -37,11 +70,11 @@ public final class Nakanaka extends BotSkeleton {
 			Cards sortedHand = Cards.sort(this.hand());
 			sortedHand = sortedHand.remove(Card.JOKER);
 			// sortedHand = sortedHand.remove(Card.S3);
-			
+
 			// 単騎出しにしか使えないカード
 			Cards singleCards = removeCombinationMelds(sortedHand);
 			singleCards = Cards.sort(singleCards);
-			
+
 			// 平民以上の時には、ペアではないカードを渡す
 			int givenSize = Rules.sizeGivenCards(this.rules(),this.rank());
 			// Rank は、大富豪が1,平民が3, 大貧民が5
@@ -50,7 +83,7 @@ public final class Nakanaka extends BotSkeleton {
 				// ダイヤの3は渡さない
 				singleCards.remove(Card.D3);
 				sortedHand.remove(Card.D3);
-				
+
 				if(givenSize == 1) {
 					if(singleCards.size() < 1) {
 						result = result.add(sortedHand.get(0));
@@ -72,7 +105,7 @@ public final class Nakanaka extends BotSkeleton {
 					} else {
 						Card first = singleCards.get(0);
 						Card second = singleCards.get(1);
-						
+
 						if(first.rank() != Rank.EIGHT
 								&& first.rank().compareTo(Rank.JACK) < 0) {
 							result = result.add(first);
@@ -91,23 +124,23 @@ public final class Nakanaka extends BotSkeleton {
 						}
 					}
 				}
-				
+
 				// initGame();
 			} else {
 				// 平民、貧民、大貧民の場合
 				int size = sortedHand.size();
-				
+
 				for(int i = 0; i < givenSize; i++){
 					result = result.add(sortedHand.get(size - i - 1));
 				}
 			}
-			
+
 			//たとえば，大貧民なら JOKER S2
 			//たとえば，大富豪なら D3 D4
 			return result;
 		} catch (Exception e) {
 			Cards result = Cards.EMPTY_CARDS;
-			
+
 			Cards sortedHand = Cards.sort(this.hand());
 			sortedHand = sortedHand.remove(Card.JOKER);
 			int givenSize = Rules.sizeGivenCards(this.rules(),this.rank());
@@ -116,11 +149,11 @@ public final class Nakanaka extends BotSkeleton {
 			if(givenSize == 2) {
 				result.add(sortedHand.get(1));
 			}
-			
+
 			return result;
 		}
 	}
-		
+
 	Strategy[] strategyList = {
 			new UseSpade3Strategy(),
 			// new JokerLock(),
@@ -164,14 +197,14 @@ public final class Nakanaka extends BotSkeleton {
     		if(state.hand == null) {
     			initGame();
     		}
-    		
+
     		state.hand = hand();
-    		
+
     		Meld strategyMeld = strategyLoop(strategyList);
     		if(strategyMeld != null) {
     			// state の状況書き換え
     			state.place(strategyMeld);
-    			
+
     			Cards cards = strategyMeld.asCards();
     			if(cards.size() == 1 && cards.get(0) == Card.JOKER) {
     				if(place().order() == Order.NORMAL) {
@@ -237,10 +270,10 @@ public final class Nakanaka extends BotSkeleton {
 		cards = cards.remove(Card.JOKER);
 
 		ArrayList<MeldSet> meldSets = Utils.parseMelds(cards);
-		
+
 		MeldSet min = meldSets.get(0);
 		int size = min.size();
-		
+
 		for(int i = 1; i < meldSets.size(); i++) {
 			int tmp = meldSets.get(i).size();
 			if(size > tmp) {
@@ -248,15 +281,15 @@ public final class Nakanaka extends BotSkeleton {
 				min = meldSets.get(i);
 			}
 		}
-		
+
 		Melds sequenceMelds = min.sequence;
-		
+
 		for(Meld meld: sequenceMelds) {
 			cards = cards.remove(meld.asCards());
 		}
-		
+
 		Melds groupMelds = Melds.parseGroupMelds(cards);
-		
+
 
 		for(Meld meld: groupMelds) {
 			for(Card card: meld.asCards()) {
@@ -270,21 +303,21 @@ public final class Nakanaka extends BotSkeleton {
 	@Override
 	public void played(java.lang.Integer number, Meld playedMeld) {
 		super.played(number, playedMeld);
-		
+
 		try {
 			/*
 			if(playedMeld.asCards().contains(Card.JOKER)) {
 				System.out.println(playedMeld);
 			}
 			 */
-		
+
 			if(state.hand == null) {
 				initGame();
 				// 2重にカード枚数を引いてしまわないように補正
 				state.numberOfPlayerCards[number] += playedMeld.asCards().size();
 			}
-			
-			
+
+
 			// 場の状況のアップデート
 			state.played(number, playedMeld, this);
 		} catch (Exception e) {
@@ -327,15 +360,15 @@ public final class Nakanaka extends BotSkeleton {
 		} catch (Exception e) {
 		}
 	}
-	
+
 	int[][] colors = {
-			{255, 0, 0}, 
+			{255, 0, 0},
 			{0, 255, 0},
 			{0, 0, 255},
 			{255, 255, 0},
 			{0, 255,255}
 	};
-	
+
 	@Override
 	public void gameEnded() {
 		super.gameEnded();
@@ -358,13 +391,13 @@ public final class Nakanaka extends BotSkeleton {
 						for(int j = 0; j < 5; j++) {
 							Canvas.setColor(colors[j][0], colors[j][1], colors[j][2]);
 							int height =  wins2[player][i][j] * 2000 / game;
-							Canvas.fillRect(50 + 100 * player + i * 20 + j * 4, 550 - height, 4, height); 
+							Canvas.fillRect(50 + 100 * player + i * 20 + j * 4, 550 - height, 4, height);
 						}
 					}
 				}
 				Canvas.forceRepaint();
 			}
-			
+
 			game++;
 		/*
 		PlayersInformation info = playersInformation();
@@ -376,7 +409,7 @@ public final class Nakanaka extends BotSkeleton {
 				points[i] += 6 - rank;
 				mesg += points[i] + ", ";
 			} catch (Exception e) {
-				
+
 			}
 		}
 		Utils.debug(mesg);
@@ -388,20 +421,20 @@ public final class Nakanaka extends BotSkeleton {
 	@Override
 	public void playRejected(java.lang.Integer number, Meld playedMeld) {
 		super.playRejected(number, playedMeld);
-	
+
 		try {
 			if(this.number().equals(number) && playedMeld != last && playedMeld != PASS) {
 				// JOptionPane.showMessageDialog(null, "おかしいぞ" + playedMeld);
 			}
-			
+
 			if(this.number().equals(number) && playedMeld != PASS) {
 				// JOptionPane.showMessageDialog(null, "へんだぞ" + playedMeld);
 			}
 		} catch (Exception e) {
 		}
 	}
-	
-	
+
+
 	@Override
 	public void playerWon(java.lang.Integer number) {
 		super.playerWon(number);
@@ -437,7 +470,7 @@ public final class Nakanaka extends BotSkeleton {
 		if(!melds.isEmpty()) {
 			state.sequence = true;
 		}
-		
+
 		PlayersInformation info = playersInformation();
 		state.numberOfPlayerCards = new int[5];
 		int [] tmp = info.numCardsOfPlayers();
@@ -445,12 +478,12 @@ public final class Nakanaka extends BotSkeleton {
 			state.numberOfPlayerCards[i] = tmp[i];
 		}
 		int rank = 0;
-		
+
 		try {
 			rank = rank();
 		} catch(Exception e) {
 		}
-		
+
 		// 順位を登録
 		state.botRank = rank;
 	}
