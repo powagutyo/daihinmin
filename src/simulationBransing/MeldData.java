@@ -8,6 +8,7 @@ import jp.ac.uec.daihinmin.card.Card;
 import jp.ac.uec.daihinmin.card.Cards;
 import jp.ac.uec.daihinmin.card.Meld;
 import monteCalro.Utility;
+import object.BitData;
 
 /**
  * 出せる役のデータ
@@ -86,7 +87,7 @@ public class MeldData implements Cloneable {
 	 */
 	public MeldData(int[] cards) {
 		UCB = 0.1;
-		if (cards[0] >= 256) {// PASSの時
+		if (cards[0] >= 64) {// PASSの時
 			pass = true;
 			meld = PASS;
 		} else {
@@ -146,7 +147,7 @@ public class MeldData implements Cloneable {
 		winNum = new int[5];
 	}
 
-	public void init(boolean[] firstWonPlayer) {
+	public void init(int firstWonPlayer) {
 		point = 0;
 		haveChildren = false;
 		isSearchChildren = true;
@@ -162,10 +163,9 @@ public class MeldData implements Cloneable {
 	 *
 	 * @param firstWonPlayer
 	 */
-	public void initUCB(boolean[] firstWonPlayer) {
-		int size = firstWonPlayer.length;
-		for (int i = 0; i < size; i++) {
-			if (!firstWonPlayer[i])// 勝ってない人の時
+	public void initUCB(int firstWonPlayer) {
+		for (int i = 0; i < 5; i++) {
+			if (!BitData.checkPlayer_num(firstWonPlayer, i))// 勝ってない人の時
 				playerNum++;
 		}
 		// UCBの中央値にする
@@ -345,8 +345,7 @@ public class MeldData implements Cloneable {
 	 *
 	 * @param md
 	 */
-	public void addChildren(MeldData md, int turnPlayer,
-			boolean[] firstWonPLayer) {
+	public void addChildren(MeldData md, int turnPlayer,int firstWonPLayer) {
 		if (children == null) {
 			children = new ArrayList<MeldData>(64);
 			this.haveChildren = true;

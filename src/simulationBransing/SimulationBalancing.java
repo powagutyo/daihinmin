@@ -31,13 +31,13 @@ public class SimulationBalancing {
 	private double[] weight_sita = new double[weightNumber];
 
 	/** 棋譜の読み込みデータの数 ***/
-	private final int gameRecordData = 100;
+	private static final int GAMERECORDDATA = 100;
 	/** 学習の回数 **/
-	private final int learningNumber = 100;
+	private static final int LEARNINGNUMBER = 100;
 	/** 平均勾配の算出計算回数 **/
-	private final int meanGradientNumber = 100;
+	private static final int MEANGRADIENTNUMBER = 100;
 	/** 学習率 **/
-	private final int arufa = 1;
+	private static final double ARUFA = 1.0;
 	/** 重みを格納用のメソッド **/
 	int[] weight = new int[InitSetting.WEIGHTNUMBER]; //重み
 
@@ -81,7 +81,7 @@ public class SimulationBalancing {
 			// TODO 自動生成された catch ブロック
 			e.printStackTrace();
 		}
-		if (InitSetting.learning)
+		if (InitSetting.LEARNING)
 			writePai_Sita(gameField);// Pai_Sitaの情報をテキストに書き込む
 
 	}
@@ -117,7 +117,7 @@ public class SimulationBalancing {
 			} catch (IOException e) {
 				System.out.println("");
 			}
-			if (gameRecord == null || counter >= gameRecordData) {
+			if (gameRecord == null || counter >= GAMERECORDDATA) {
 				break;
 			}
 			message = gameRecord.substring(0, size);// 認証コード
@@ -153,7 +153,7 @@ public class SimulationBalancing {
 	public double calcExpectedReward(GameField gf) {
 		double result = 0.0;
 		int counter = 0;
-		while (counter <= learningNumber) {
+		while (counter <= LEARNINGNUMBER) {
 			gf.firstClone();// gfを最初の状態に戻す
 
 			while (true) {
@@ -167,7 +167,7 @@ public class SimulationBalancing {
 			counter++;
 			result += gf.returnWinPoint();
 		}
-		return result / learningNumber;
+		return result / LEARNINGNUMBER;
 	}
 
 	/**
@@ -185,7 +185,7 @@ public class SimulationBalancing {
 
 		int visit = 0;
 
-		while (counter <= meanGradientNumber) {
+		while (counter <= MEANGRADIENTNUMBER) {
 			gf.firstClone();// gfを最初の状態に戻す
 			visit = 0;
 			while (true) {
@@ -198,7 +198,7 @@ public class SimulationBalancing {
 			}
 			counter++;
 			for (int i = 0; i < weightNumber; i++) {
-				meanGradient[i] += ((gf.returnWinPoint() * result[i]) / (visit * meanGradientNumber));
+				meanGradient[i] += ((gf.returnWinPoint() * result[i]) / (visit * MEANGRADIENTNUMBER));
 				result[i] = 0;
 			}
 		}
@@ -217,7 +217,7 @@ public class SimulationBalancing {
 	 *            平均勾配
 	 */
 	public void update_sita(double miniMax, double expectedReward, double[] meanGradient) {
-		double result = arufa * (miniMax - expectedReward);
+		double result = ARUFA * (miniMax - expectedReward);
 		for (int i = 0; i < weightNumber; i++) {
 			weight_sita[i] += result * meanGradient[i];
 		}
@@ -432,7 +432,7 @@ public class SimulationBalancing {
 			r = "r";
 		}
 		r += gf.getGrade()[gf.getTurnPlayer()];
-		File file = new File(InitSetting.text_PaiSita_up + r + InitSetting.text_PaiSita_under);
+		File file = new File(InitSetting.TEXT＿PAISITA＿UP + r + InitSetting.TEXT＿PAISITA＿UNDER);
 		String authenticationCode = gf.getAuthenticationCode(); // 認証用のString
 		String result = "";
 		String message = "";

@@ -182,7 +182,7 @@ public class MyData {
 	 *            縛りのマーク(Suits)
 	 */
 	private void playYomikiri(BotSkeleton bs, Melds resultMelds, Suits lock, long startTime) {
-		if (System.currentTimeMillis() - startTime > InitSetting.yomikiriTimeLimit)
+		if (System.currentTimeMillis() - startTime > InitSetting.YOMIKIRITIMRLIMIT)
 			return;
 
 		boolean result = false;

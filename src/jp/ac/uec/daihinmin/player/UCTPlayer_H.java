@@ -56,7 +56,7 @@ public class UCTPlayer_H extends BotSkeleton {
 	/*** 重みを読み込むメソッド **/
 	private ReadWeight rw;
 
-	private final boolean modeC = InitSetting.modeC;
+	private final boolean modeC = InitSetting.MODE_C;
 	/** 全員の手札群 **/
 	ArrayList<ArrayList<Card>> playersCard = new ArrayList<ArrayList<Card>>(
 			players);
@@ -200,7 +200,7 @@ public class UCTPlayer_H extends BotSkeleton {
 		if (firstGame) {
 			/** 重みの読み込み部 **/
 			wd = new WeightData();
-			if (InitSetting.doReadWeight) { // 重みの読み込み
+			if (InitSetting.DOREADWEIGHT) { // 重みの読み込み
 				rw = new ReadWeight(wd);
 				rw.start();
 			}
@@ -499,7 +499,7 @@ public class UCTPlayer_H extends BotSkeleton {
 
 		doRenew = false;// renewの初期化
 		beforeMeld = null;// beforeMeldの初期化
-		if (InitSetting.onYomikiri) {
+		if (InitSetting.ONYOMIKIRI) {
 			myData.darkForce(this); // 読み切りを実行
 			if (myData.isYomikiri()) {// 読み切り状態の時
 				return myData.getYomikiriMelds();// 読み切りから手を出す
@@ -511,7 +511,7 @@ public class UCTPlayer_H extends BotSkeleton {
 		Meld meld = MonteCalro.MonteCalroPlay(this, myData, fieldData, mh, wd);
 		System.out.println("1手の時間" + (System.currentTimeMillis() -start));
 
-		if(InitSetting.learning){//学習を行う際はUCTで手を決定する
+		if(InitSetting.LEARNING){//学習を行う際はUCTで手を決定する
 			return MonteCalro_02.MonteCalroPlay(this, myData, fieldData);
 		}
 

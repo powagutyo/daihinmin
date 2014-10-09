@@ -15,6 +15,7 @@ import monteCalro.FieldData;
 import monteCalro.MyData;
 import monteCalro.State;
 import monteCalro.Utility;
+import object.BitData;
 import object.InitSetting;
 import object.WeightData;
 
@@ -26,27 +27,26 @@ import object.WeightData;
  */
 public class GameField {
 
-	private final int players = 5;// プレイヤーの数
+	private static final int PLAYERS = 5;// プレイヤーの数
 
-	private final int cardNum = 53; // カード枚数
+	private static final int CARDNUM = 53; // カード枚数
 
-	private final int suitsNum = 4; // suitの数
+	private static final int SUITSNUM = 4; // suitの数
 
-	private final int sumPlayersHands = players * cardNum;// プレイヤー人数とカードの枚数
+	private static final int SUMPLAYERSHANDS = PLAYERS * CARDNUM;// プレイヤー人数とカードの枚数
 
-	private final int sumPlyersHandNum = players * 14;
+	private static final int SUMPLAYERSHANDNUM = PLAYERS * 14;
 
 	private int mySeat;// 自分の座席番号
 
 	private State state = State.EMPTY;// 初期状態の変数
 
-	private boolean lock; // 縛りがあるかどうか
-
-	private boolean[] lockNumber = new boolean[suitsNum];// 縛られているマークの番号
-
-	private boolean[] placeSuits = new boolean[suitsNum];// 場に出されているマーク
-
-	private boolean[] wonPlayer = new boolean[players]; // 勝利しているプレイヤー
+	/**縛りのマーク 4bit*/
+	private int lockNumber;
+	/***場のマーク　4bit**/
+	private int placeSuits;
+	/**勝利したプレイヤー　5bit**/
+	private int wonPlayer;
 
 	/** 3～2の数を1～13で表したもの -1がrenew **/
 	private int rank;// 場に出されているランク
@@ -60,24 +60,24 @@ public class GameField {
 
 	private int putLastPlayer;// 最後に出した人の座席番号
 
-	private int[] notLookCards = new int[cardNum];
+	private int[] notLookCards = new int[CARDNUM];
 
-	private boolean[] passPlayer = new boolean[players];// PASSしたかどうかの判定用の変数
+	private boolean[] passPlayer = new boolean[PLAYERS];// PASSしたかどうかの判定用の変数
 
-	private int[] playerHands = new int[sumPlayersHands]; // プレイヤーの手札
+	private int[] playerHands = new int[SUMPLAYERSHANDS]; // プレイヤーの手札
 															// int[席順][カードの種類]=
 															// 0 or 1(持っているカード)
 
-	private int[] playerHandsOfCards = new int[players];// プレイヤーごとの手札の枚数 int[席順]
+	private int[] playerHandsOfCards = new int[PLAYERS];// プレイヤーごとの手札の枚数 int[席順]
 														// = 枚数
 
-	private int[] playerTypeOfHandsofCards = new int[sumPlyersHandNum];// プレイヤーの種類によってのカード枚数
+	private int[] playerTypeOfHandsofCards = new int[SUMPLAYERSHANDNUM];// プレイヤーの種類によってのカード枚数
 	// int[席順][カードの種類]= 枚数　0～13
 	// JOKER 3 4の順番
 
-	private boolean[] firstWonPlayer = new boolean[players]; // 最初の勝ったプレイヤーを記憶しておく
+	private boolean[] firstWonPlayer = new boolean[PLAYERS]; // 最初の勝ったプレイヤーを記憶しておく
 	/** 座席のランク **/
-	private int[] grade = new int[players];
+	private int[] grade = new int[PLAYERS];
 
 	/** 試しに使ってみたMapクラス **/
 	private Map<Integer, int[]> pair;
@@ -99,9 +99,7 @@ public class GameField {
 	 * @param md
 	 */
 	public GameField(int playerNum, BotSkeleton bs, FieldData fd, MyData md) {
-
-		wonPlayer = new boolean[players];
-		passPlayer = new boolean[players];
+		passPlayer = new boolean[PLAYERS];
 
 		firstWonPlayer = fd.getWonPlayer(); // 最初に勝ったプレイヤーを保存しておく
 
@@ -125,38 +123,28 @@ public class GameField {
 	public GameField(GameField gf) {
 		pair = new HashMap<Integer, int[]>();
 
-		mySeat = gf.getMySeat();
-		State s = gf.getState();
-		if (s == State.RENEW) {
-			state = State.RENEW;
-		} else if (s == State.SINGLE) {
-			state = State.SINGLE;
-		} else if (s == State.GROUP) {
-			state = State.GROUP;
-		} else {
-			state = State.SEQUENCE;
-		}
-		lock = gf.isLock();
-		rank = gf.getRank();
-		reverse = gf.isReverse();
-		numberOfCardSize = gf.getNumberOfCardSize();
-		putLastPlayer = gf.getPutLastPlayer();
-		turnPlayer = gf.getTurnPlayer();
+		mySeat = gf.mySeat;
+		state = gf.getState();
 
-		System.arraycopy(gf.getGrade(), 0, grade, 0, players);
-		System.arraycopy(gf.getNotLookCard(), 0, notLookCards, 0, cardNum);
+		rank = gf.rank;
+		reverse = gf.reverse;
+		numberOfCardSize = gf.numberOfCardSize;
+		putLastPlayer = gf.putLastPlayer;
+		turnPlayer = gf.turnPlayer;
+		lockNumber = gf.lockNumber;
+		placeSuits = gf.placeSuits;
+		wonPlayer = gf.wonPlayer;
 
-		System.arraycopy(gf.getLockNumber(), 0, lockNumber, 0, suitsNum);
-		System.arraycopy(gf.getPlaceSuits(), 0, placeSuits, 0, suitsNum);
-		System.arraycopy(gf.getWonPlayer(), 0, wonPlayer, 0, players);
-		System.arraycopy(gf.getPassPlayer(), 0, passPlayer, 0, players);
+		System.arraycopy(gf.getGrade(), 0, grade, 0, PLAYERS);
+		System.arraycopy(gf.getNotLookCard(), 0, notLookCards, 0, CARDNUM);
+		System.arraycopy(gf.getPassPlayer(), 0, passPlayer, 0, PLAYERS);
 		System.arraycopy(gf.getPlayerHandsOfCards(), 0, playerHandsOfCards, 0,
-				players);
-		System.arraycopy(gf.getFirstWonPlayer(), 0, firstWonPlayer, 0, players);
+				PLAYERS);
+		System.arraycopy(gf.getFirstWonPlayer(), 0, firstWonPlayer, 0, PLAYERS);
 		System.arraycopy(gf.getPlayerHands(), 0, playerHands, 0,
-				sumPlayersHands);
+				SUMPLAYERSHANDS);
 		System.arraycopy(gf.getPlayerTypeOfHandsofCards(), 0,
-				playerTypeOfHandsofCards, 0, players * 14);
+				playerTypeOfHandsofCards, 0, PLAYERS * 14);
 
 		this.sb = gf.getSb();
 	}
@@ -165,8 +153,8 @@ public class GameField {
 	 * 見えていないカードの初期化
 	 */
 	public void initNotLookCard() {
-		for (int i = 0; i < cardNum; i++) {
-			for (int j = 0; j < players; j++) {
+		for (int i = 0; i < CARDNUM; i++) {
+			for (int j = 0; j < PLAYERS; j++) {
 				if (playerHands[i + j * 53] == 1) {
 					notLookCards[i] = 1;
 					break;
@@ -203,14 +191,14 @@ public class GameField {
 	 * @return　種類別に分けたカードの枚数を返す
 	 */
 	private int[] getTypeOfHandsOfCards() {
-		int num = players * 14;
+		int num = PLAYERS * 14;
 		int[] result = new int[num];
 
 		int counter = 0;// カードの枚数をカウントする
 		// 探索部分
-		for (int i = 0; i < players; i++) {
+		for (int i = 0; i < PLAYERS; i++) {
 			for (int j = 0; j < 14; j++) {// カードの数字の枚数
-				num = i * cardNum + j;
+				num = i * CARDNUM + j;
 				if (j != 0) {// 普通のカードの処理
 					for (int l = 0; l < 4; l++) {// カードの種類
 						if (playerHands[num + (l * 13)] == 1)// もしカードが存在する時
@@ -238,21 +226,21 @@ public class GameField {
 		int pos = 4; // 手札の位置
 		int num = 0;
 		// 初期化
-		for (int i = 0; i < sumPlayersHands; i++) {
+		for (int i = 0; i < SUMPLAYERSHANDS; i++) {
 			playerHands[i] = 0;
 		}
-		for (int i = 0; i < sumPlyersHandNum; i++) {
+		for (int i = 0; i < SUMPLAYERSHANDNUM; i++) {
 			playerTypeOfHandsofCards[i] = 0;
 		}
-		for (int i = 0; i < players; i++) {
+		for (int i = 0; i < PLAYERS; i++) {
 			playerHandsOfCards[i] = 0;
 		}
 
 		// プレイヤー達の手札を復元
-		for (int i = 0; i < cardNum; i++) {
+		for (int i = 0; i < CARDNUM; i++) {
 			num = Integer.parseInt(gameRecord.substring(pos, pos + 1));
 			if (num != 9) {
-				playerHands[cardNum * num + i]++;// プレイヤーのカードを加えてあげる
+				playerHands[CARDNUM * num + i]++;// プレイヤーのカードを加えてあげる
 				playerHandsOfCards[num]++;// プレイヤーの手札枚数を増やす
 				playerTypeOfHandsofCards[num * 14 + ((i - 1) % 13 + 1)]++;// プレイヤーのカードの種類の増加
 				notLookCards[i] = 1;
@@ -260,25 +248,20 @@ public class GameField {
 			pos++;
 		}
 		// LockNumberの復元
-		lock = false;
-		for (int i = 0; i < suitsNum; i++) {
+		lockNumber = 0;
+		for (int i = 0; i < SUITSNUM; i++) {
 			num = Integer.parseInt(gameRecord.substring(pos, pos + 1));
 			if (num == 1) {
-				lockNumber[i] = true;
-				lock = true;
-			} else {
-				lockNumber[i] = false;
-
+				lockNumber = lockNumber | BitData.getLockNumber_SuitsNumber(i);
 			}
 			pos++;
 		}
 		// PLaceSuitsの復元
-		for (int i = 0; i < suitsNum; i++) {
+		placeSuits = 0;
+		for (int i = 0; i < SUITSNUM; i++) {
 			num = Integer.parseInt(gameRecord.substring(pos, pos + 1));
 			if (num == 1) {
-				placeSuits[i] = true;
-			} else {
-				placeSuits[i] = false;
+				placeSuits = placeSuits | BitData.getLockNumber_SuitsNumber(i);
 			}
 			pos++;
 		}
@@ -321,7 +304,7 @@ public class GameField {
 		}
 		pos++;
 		// PassPlayer
-		for (int i = 0; i < players; i++) {
+		for (int i = 0; i < PLAYERS; i++) {
 			num = Integer.parseInt(gameRecord.substring(pos, pos + 1));
 			if (num == 1) {
 				passPlayer[i] = true;
@@ -331,19 +314,17 @@ public class GameField {
 			pos++;
 		}
 		// firstWonPlayer
-		for (int i = 0; i < players; i++) {
+		wonPlayer = 0;
+		for (int i = 0; i < PLAYERS; i++) {
 			num = Integer.parseInt(gameRecord.substring(pos, pos + 1));
 			if (num == 1) {
 				firstWonPlayer[i] = true;
-				wonPlayer[i] = true;
-			} else {
-				firstWonPlayer[i] = false;
-				wonPlayer[i] = false;
+				wonPlayer = wonPlayer | BitData.getPLayersNumber_i(i);
 			}
 			pos++;
 		}
 		// grade
-		for (int i = 0; i < players; i++) {
+		for (int i = 0; i < PLAYERS; i++) {
 			num = Integer.parseInt(gameRecord.substring(pos, pos + 1));
 			grade[i] = num;
 			pos++;
@@ -379,37 +360,28 @@ public class GameField {
 	 *            BotSkwltonクラス
 	 */
 	public void clone(GameField gf) {
-		State s = gf.getState();
-		if (s == State.RENEW) {
-			state = State.RENEW;
-		} else if (s == State.SINGLE) {
-			state = State.SINGLE;
-		} else if (s == State.GROUP) {
-			state = State.GROUP;
-		} else {
-			state = State.SEQUENCE;
-		}
-		lock = gf.isLock();
-		rank = gf.getRank();
-		reverse = gf.isReverse();
-		numberOfCardSize = gf.getNumberOfCardSize();
-		putLastPlayer = gf.getPutLastPlayer();
-		turnPlayer = gf.getTurnPlayer();
+		mySeat = gf.mySeat;
+		state = gf.getState();
 
-		System.arraycopy(gf.getGrade(), 0, grade, 0, players);
-		System.arraycopy(gf.getNotLookCard(), 0, notLookCards, 0, cardNum);
+		rank = gf.rank;
+		reverse = gf.reverse;
+		numberOfCardSize = gf.numberOfCardSize;
+		putLastPlayer = gf.putLastPlayer;
+		turnPlayer = gf.turnPlayer;
+		lockNumber = gf.lockNumber;
+		placeSuits = gf.placeSuits;
+		wonPlayer = gf.wonPlayer;
 
-		System.arraycopy(gf.getLockNumber(), 0, lockNumber, 0, suitsNum);
-		System.arraycopy(gf.getPlaceSuits(), 0, placeSuits, 0, suitsNum);
-		System.arraycopy(gf.getWonPlayer(), 0, wonPlayer, 0, players);
-		System.arraycopy(gf.getPassPlayer(), 0, passPlayer, 0, players);
+		System.arraycopy(gf.getGrade(), 0, grade, 0, PLAYERS);
+		System.arraycopy(gf.getNotLookCard(), 0, notLookCards, 0, CARDNUM);
+		System.arraycopy(gf.getPassPlayer(), 0, passPlayer, 0, PLAYERS);
 		System.arraycopy(gf.getPlayerHandsOfCards(), 0, playerHandsOfCards, 0,
-				players);
-		System.arraycopy(gf.getFirstWonPlayer(), 0, firstWonPlayer, 0, players);
+				PLAYERS);
+		System.arraycopy(gf.getFirstWonPlayer(), 0, firstWonPlayer, 0, PLAYERS);
 		System.arraycopy(gf.getPlayerHands(), 0, playerHands, 0,
-				sumPlayersHands);
+				SUMPLAYERSHANDS);
 		System.arraycopy(gf.getPlayerTypeOfHandsofCards(), 0,
-				playerTypeOfHandsofCards, 0, players * 14);
+				playerTypeOfHandsofCards, 0, PLAYERS * 14);
 
 	}
 
@@ -436,15 +408,26 @@ public class GameField {
 		Meld lastMeld = place.lastMeld();
 
 		state = getState(lastMeld);// 役を判定する
-
+		lockNumber = 0;
+		int counter = 0;
 		// 縛りが存在するかどうかのチェック
 		if (place.lockedSuits() != Suits.EMPTY_SUITS) {
-			lock = true;// 縛りが存在する
-			// 縛っているマークを探索
-			lockNumber = Utility.suitsParseArrayBoolean(place.lockedSuits());
+			for (boolean flag : Utility.suitsParseArrayBoolean(place.lockedSuits())) {
+				if (flag) {
+					lockNumber = lockNumber | BitData.getLockNumber_SuitsNumber(counter);
+				}
+				counter++;
+			}
 		}
 		// 場のマークを取り出す
-		placeSuits = Utility.meldParseSuitsOfBoolean(lastMeld);
+		counter = 0;
+		for (boolean flag : Utility.meldParseSuitsOfBoolean(lastMeld)) {
+			if (flag) {
+				placeSuits = placeSuits | BitData.getLockNumber_SuitsNumber(counter);
+			}
+			counter++;
+		}
+
 		// 革命しているかどうか
 		reverse = place.isReverse();
 		// 場に出されているカードのランク
@@ -463,12 +446,19 @@ public class GameField {
 		}
 
 		// wonPlayerの更新
-		wonPlayer = fd.getWonPlayer();
+		counter = 0;
+		wonPlayer = 0;
+		for (boolean flag : fd.getWonPlayer()) {
+			if (flag)
+				wonPlayer = wonPlayer | BitData.getPLayersNumber_i(counter);
+			counter++;
+		}
+
 		// PASSしたプレイヤーをの初期状態の格納
 		passPlayer = fd.getPassPlayer();
 		/** 勝ったプレイヤーは必ずパスになる **/
-		for (int i = 0; i < players; i++) {
-			if (wonPlayer[i])
+		for (int i = 0; i < PLAYERS; i++) {
+			if (BitData.checkPlayer_num(wonPlayer, i))
 				passPlayer[i] = true;
 		}
 		// LastPLayerの座席番号を格納
@@ -513,15 +503,14 @@ public class GameField {
 			rank = 14;
 		}
 		numberOfCardSize = 0;// カードの大きさを初期化
-		lock = false;
 		// PASSプレイヤーの更新
-		System.arraycopy(wonPlayer, 0, passPlayer, 0, players);
-
-		// 場のマークと縛りのマークを初期化
-		for (int i = 0; i < 4; i++) {
-			lockNumber[i] = false;
-			placeSuits[i] = false;
+		for(int i= 0;i< PLAYERS;i++){
+			passPlayer[i] = false;
+			if(BitData.checkPlayer_num(wonPlayer, i))
+				passPlayer[i]=true;
 		}
+		placeSuits = 0;
+		lockNumber = 0;
 	}
 
 	/**
@@ -531,8 +520,8 @@ public class GameField {
 	 */
 	public int returnWinPoint() {
 		int result = 5;
-		for (int i = 0; i < players; i++) {
-			if (i != mySeat && wonPlayer[i]) {
+		for (int i = 0; i < PLAYERS; i++) {
+			if (i != mySeat && BitData.checkPlayer_num(wonPlayer, i)) {
 				result--;
 			}
 		}
@@ -546,7 +535,7 @@ public class GameField {
 	 */
 	public int returnWinPoint_2() {
 		int result = -1;
-		if (wonPlayer[mySeat]) {
+		if (BitData.checkPlayer_num(wonPlayer, mySeat)) {
 			result = 1;
 		}
 		return result;
@@ -556,7 +545,7 @@ public class GameField {
 	 * すべてのプレイヤーをPASSにする
 	 */
 	public void allPlayerDoPass() {
-		for (int i = 0; i < players; i++) {
+		for (int i = 0; i < PLAYERS; i++) {
 			passPlayer[i] = true;
 		}
 	}
@@ -569,9 +558,9 @@ public class GameField {
 	public boolean checkGoalPlayer() {
 		boolean result = true;// 自分が上がったかどうか
 		// 自分が上がっていない状態で他のプレイヤーが全員上がっている時
-		if (!wonPlayer[mySeat]) {
-			for (int i = 0; i < players; i++) {
-				if (!wonPlayer[i] && i != mySeat) {// 自分のターンじゃなくかつ誰か上がっていない時
+		if (!BitData.checkPlayer_num(wonPlayer, mySeat)) {
+			for (int i = 0; i < PLAYERS; i++) {
+				if (i != mySeat && !BitData.checkPlayer_num(wonPlayer, i)) {// 自分のターンじゃなくかつ誰か上がっていない時
 					result = false;
 					break;
 				}
@@ -579,9 +568,9 @@ public class GameField {
 		}
 
 		// プレイヤーの手札を見た時に1枚もなかった場合は勝ちプレイヤー
-		for (int i = 0; i < players; i++) {
-			if (playerHandsOfCards[i] <= 0 && !wonPlayer[i]) {// カードが存在しない時
-				wonPlayer[i] = true;
+		for (int i = 0; i < PLAYERS; i++) {
+			if (playerHandsOfCards[i] <= 0 && !BitData.checkPlayer_num(wonPlayer, i)) {// カードが存在しない時
+				wonPlayer = wonPlayer | BitData.getPLayersNumber_i(i);
 				passPlayer[i] = true;
 				if (i == mySeat)// 自分が上がったなら
 					result = true;
@@ -598,11 +587,11 @@ public class GameField {
 	 */
 	public boolean checkGoalPlayer_2() {
 		boolean result = false;// 誰かが上がった時
-		for (int i = 0; i < players; i++) {
+		for (int i = 0; i < PLAYERS; i++) {
 			if (!firstWonPlayer[i]) {// 最初の勝ったプレイヤーをはじく
 				if (playerHandsOfCards[i] <= 0) { // 誰かが勝った時
 					result = true;
-					wonPlayer[i] = true;
+					wonPlayer = wonPlayer | BitData.getPLayersNumber_i(i);
 					break;
 				}
 			}
@@ -617,8 +606,8 @@ public class GameField {
 	 */
 	public boolean checkRenew() {
 		boolean result = false;
-		int notPassPlayer = players; // PASSしたプレイヤーの数を数える
-		for (int i = 0; i < players; i++) {
+		int notPassPlayer = PLAYERS; // PASSしたプレイヤーの数を数える
+		for (int i = 0; i < PLAYERS; i++) {
 			if (passPlayer[i])// パスしたプレイヤーの時
 				notPassPlayer--;
 		}
@@ -634,16 +623,16 @@ public class GameField {
 	public void updateTurnPlayer() {
 		if (state == State.RENEW) {// renewした時の判定
 			/** renewした時は最後に置いたプレイヤーをターンプレイヤーにする **/
-			if (wonPlayer[turnPlayer]) {
+			if (BitData.checkPlayer_num(wonPlayer, turnPlayer)) {
 				turnPlayer++;
-				if (turnPlayer >= players)// プレイヤーの人数把握
+				if (turnPlayer >= PLAYERS)// プレイヤーの人数把握
 					turnPlayer = 0;
 			} else {
 				turnPlayer = putLastPlayer;
 			}
 		} else {// renew以外
 			turnPlayer++;
-			if (turnPlayer >= players)// プレイヤーの人数把握
+			if (turnPlayer >= PLAYERS)// プレイヤーの人数把握
 				turnPlayer = 0;
 		}
 
@@ -677,7 +666,7 @@ public class GameField {
 			int num = rank;
 			if (!reverse) {// 革命じゃない時
 				for (int i = 0; i < numberOfCardSize; i++) {
-					if(num == 6){//8のカードの時
+					if (num == 6) {// 8のカードの時
 						result = true;
 						break;
 					}
@@ -685,7 +674,7 @@ public class GameField {
 				}
 			} else {// 革命の時
 				for (int i = 0; i < numberOfCardSize; i++) {
-					if(num == 6){//8のカードの時
+					if (num == 6) {// 8のカードの時
 						result = true;
 						break;
 					}
@@ -722,22 +711,22 @@ public class GameField {
 					joker = true;
 					continue;
 				}
-				placeSuits[(num - 1) / 13] = true; // 役にあったカードをtrueにする
+				placeSuits = placeSuits | BitData.getLockNumber_SuitsNumber((num - 1) / 13);
+
 			}
 			// jokerがあった時はランダムでマークをあてる
 			if (joker) {// jokerがあった時の処理
 				for (int i = 0; i < 4; i++) {
-					if (!placeSuits[i]) {
-						placeSuits[i] = true;
+					if (!BitData.checkSuits_num(placeSuits, i)) {
+						placeSuits = placeSuits | BitData.getLockNumber_SuitsNumber(i);
 						break;
 					}
 				}
 			}
-
 		} else {// それ以外の時の更新部
-			if (!lock) {
+			if (lockNumber == 0) {
 				// 縛りが存在するかの確認
-				boolean[] cloneLock = new boolean[4];
+				int cloneLock = 0;
 				// 今の役のマークを格納する
 				boolean joker = false;
 				for (int i = 0; i < numberOfCardSize; i++) {
@@ -746,29 +735,30 @@ public class GameField {
 						continue;
 					}
 					num = (putHand[i] - 1) / 13;
-					cloneLock[num] = true;
+					cloneLock = cloneLock | BitData.getLockNumber_SuitsNumber(num);
 				}
 				boolean result = true;
 				// 場の役と今の役を比べる
 				for (int i = 0; i < 4; i++) {
-					if (placeSuits[i] != cloneLock[i]) {
-						if (joker) {
+					if(BitData.checkSuits_num(placeSuits, i)){ //前の状態にその役が存在する時
+						if(BitData.checkSuits_num(cloneLock, i)){ //その盤面にも存在する時
+							continue;
+						}else if(joker){
 							joker = false;
-							cloneLock[i] = true;
+							cloneLock = cloneLock + BitData.getLockNumber_SuitsNumber(i);
 							continue;
 						}
-						result = false;
-						break;
 					}
+					result = false;
+					break;
 				}
 				if (result) { // 縛りが成立する場合
-					lock = true;
-					System.arraycopy(cloneLock, 0, lockNumber, 0, suitsNum);
+					lockNumber = placeSuits;
 				}
 				placeSuits = cloneLock;
 
 			} else {// 縛りが存在する時
-				System.arraycopy(lockNumber, 0, placeSuits, 0, suitsNum);
+				placeSuits = lockNumber;
 			}
 		}
 
@@ -803,7 +793,7 @@ public class GameField {
 		for (int i = 0; i < numberOfCardSize; i++) {
 			num = putHand[i];
 			notLookCards[num] = 0;
-			playerHands[turnPlayer * cardNum + num] = 0;
+			playerHands[turnPlayer * CARDNUM + num] = 0;
 			if (num != 0) {// jokerの時の処理
 				num = (num - 1) % 13 + 1;
 			}
@@ -890,7 +880,7 @@ public class GameField {
 	private void searchSingleMeld() {
 		// スペ3の判定
 		if (state != State.RENEW && (rank == 14 || rank == 0)) {// JOKERが場に出されている時
-			if (playerHands[turnPlayer * cardNum + 1] == 1) { // スぺ3を持っている時
+			if (playerHands[turnPlayer * CARDNUM + 1] == 1) { // スぺ3を持っている時
 				addMap(new int[] { 1 });
 				return;
 			}
@@ -904,11 +894,10 @@ public class GameField {
 			for (int i = rank + 1; i < 14; i++) {
 				if (playerTypeOfHandsofCards[firstPos + i] != 0)// 1枚以上存在する時
 					for (int j = 0; j < 4; j++) {
-						if (lock && !lockNumber[j]) {// 縛られているマークの時
+						if (lockNumber != 0 && !BitData.checkSuits_num(lockNumber, j))
 							continue;
-						}
 						num = i + j * 13;
-						if (playerHands[turnPlayer * cardNum + num] == 1) {// もしそのカードを持っている時
+						if (playerHands[turnPlayer * CARDNUM + num] == 1) {// もしそのカードを持っている時
 							addMap(new int[] { num });
 						}
 					}
@@ -917,11 +906,11 @@ public class GameField {
 			for (int i = rank - 1; i > 0; i--) {
 				if (playerTypeOfHandsofCards[firstPos + i] != 0)// 1枚以上存在する時
 					for (int j = 0; j < 4; j++) {
-						if (lock && !lockNumber[j]) {// 縛られているマークの時
+						if (lockNumber != 0 && !BitData.checkSuits_num(lockNumber, j)) {// 縛られているマークの時
 							continue;
 						}
 						num = i + j * 13;
-						if (playerHands[turnPlayer * cardNum + num] == 1) {// もしそのカードを持っている時
+						if (playerHands[turnPlayer * CARDNUM + num] == 1) {// もしそのカードを持っている時
 							addMap(new int[] { num });
 						}
 					}
@@ -943,7 +932,7 @@ public class GameField {
 
 		boolean joker = false; // jokerを持っているかどうか
 		int jk = 0;// ジョーカーの枚数分足すための変数
-		int firstPos = turnPlayer * cardNum;
+		int firstPos = turnPlayer * CARDNUM;
 		int pthc = turnPlayer * 14;
 		if (playerTypeOfHandsofCards[pthc] == 1) {// jokerを持っている時
 			joker = true;
@@ -1062,7 +1051,7 @@ public class GameField {
 	 * @return 出せるかどうか
 	 */
 	private boolean checkLock_Group(int[] meld) {
-		if (!lock)// 縛りが存在しない時
+		if (lockNumber == 0)// 縛りが存在しない時
 			return true;
 		boolean result = true;
 		int size = meld.length;
@@ -1073,7 +1062,7 @@ public class GameField {
 				continue;
 			}
 			num = (meld[i] - 1) / 13;// markを抽出
-			if (!lockNumber[num]) {
+			if (!BitData.checkSuits_num(lockNumber, num)) {
 				result = false;
 				break;
 			}
@@ -1091,7 +1080,7 @@ public class GameField {
 	private void searchSequenceMeld(int cardSize) {
 		int[] meld = new int[cardSize];
 		int counter = 0;
-		int firstPos = turnPlayer * cardNum; // playerHandsの始めの位置を記録
+		int firstPos = turnPlayer * CARDNUM; // playerHandsの始めの位置を記録
 		boolean joker = false;
 
 		if (playerHands[firstPos] == 1) {// jokerを持っている時
@@ -1117,7 +1106,7 @@ public class GameField {
 				for (int j = 0; j < 4; j++) {
 					num = i + j * 13;// カードを表現
 					if (playerHands[firstPos + num] == 1) {// そのカードを持っている時
-						if (lock && !lockNumber[j])// 縛りが存在しており、縛られているカードではない場合
+						if (lockNumber != 0 && !BitData.checkSuits_num(lockNumber, j))// 縛りが存在しており、縛られているカードではない場合
 							continue;
 						searchSequence(meld, counter, num, cardSize, joker,
 								false, firstPos);// 階段の探索を行う
@@ -1128,8 +1117,8 @@ public class GameField {
 			for (int i = defalt; i > cardSize - 1; i--) {// カードでの探索
 				for (int j = 0; j < 4; j++) {
 					num = i + j * 13;// カードを表現
-					if (playerHands[turnPlayer * cardNum + num] == 1) {// そのカードを持っている時
-						if (lock && !lockNumber[j])// 縛りが存在しており、縛られているカードではない場合
+					if (playerHands[turnPlayer * CARDNUM + num] == 1) {// そのカードを持っている時
+						if (lockNumber != 0 && !BitData.checkSuits_num(lockNumber, j))// 縛りが存在しており、縛られているカードではない場合
 							continue;
 						searchSequence(meld, counter, num, cardSize, joker,
 								false, firstPos);// 階段の探索を行う
@@ -1204,62 +1193,58 @@ public class GameField {
 	public void renewPlace_MeldData(MeldData md) {
 		int num = -1;
 		if (!md.isPass()) {// MeldDataがパスでは無い時
-			int firstPos = turnPlayer * cardNum;
+			int firstPos = turnPlayer * CARDNUM;
 			int ptch = turnPlayer * 14;
+			boolean result = false;
 
-			if (state != State.RENEW && !lock) {// renewじゃない時かつ縛りが無い時
-				boolean result = true;
+			int[] putHand = md.getCards();
+
+			numberOfCardSize = md.getSize();// 場に出ているカード枚数を記憶
+
+			putLastPlayer = turnPlayer;// 最後に出したプレイヤーを自分にする
+
+			if (state != State.RENEW && lockNumber != 0) {// renewじゃない時かつ縛りが無い時
+				result = true;
 				for (int i = 0; i < numberOfCardSize; i++) {
 					if (num == 0)// Jokerの時はcontinue
 						continue;
 					num = (md.getCards()[i] - 1) / 13;// markを取る
-					if (!placeSuits[num]) {
+					if (!BitData.checkSuits_num(placeSuits, num)) {
 						result = false;
 						break;
 					}
 				}
 				if (result) {// 縛りの発生
-					lock = true;
-					System.arraycopy(placeSuits, 0, lockNumber, 0, suitsNum);
+					lockNumber = placeSuits;
 				}
 			}
 
-			// 初期化
-			for (int i = 0; i < 4; i++) {
-				placeSuits[i] = false;
-			}
+			if (!result) {// 縛りが発生しない時
+				placeSuits = 0;
+				boolean joker = false;
+				// placeSuitsの更新
 
-			numberOfCardSize = md.getSize();// 場に出ているカード枚数を記憶
-
-			boolean joker = false;
-			// placeSuitsの更新
-			int[] putHand = new int[numberOfCardSize];
-
-			for (int i = 0; i < numberOfCardSize; i++) {
-				num = md.getCards()[i];
-				putHand[i] = num;
-				if (num == 0) {// Jokerの時はcontinue
-					joker = true;
-					continue;
+				for (int i = 0; i < numberOfCardSize; i++) {
+					num = putHand[i];
+					if (num == 0) {// Jokerの時はcontinue
+						joker = true;
+						continue;
+					}
+					num = (num - 1) / 13;// markを取る
+					placeSuits = placeSuits | BitData.getLockNumber_SuitsNumber(num);
 				}
-				num = (num - 1) / 13;// markを取る
-				placeSuits[num] = true;
-			}
 
-			if (joker) {// jokerの時、適当にマークを割り当てる
-				for (int i = 0; i < 4; i++) {
-					if (!placeSuits[i]) {
-						placeSuits[i] = true;
-						joker = false;
-						break;
+				if (joker) {// jokerの時、適当にマークを割り当てる
+					for (int i = 0; i < 4; i++) {
+						if (!BitData.checkSuits_num(placeSuits, i)) {
+							placeSuits = placeSuits | BitData.getLockNumber_SuitsNumber(i);
+							break;
+						}
 					}
 				}
+				state = getState(putHand);// 場の状態の更新
+
 			}
-
-			state = getState(putHand);// 場の状態の更新
-
-			putLastPlayer = turnPlayer;// 最後に出したプレイヤーを自分にする
-
 			// 役のランクを更新
 			if (putHand[0] == 0 && state == State.SINGLE) {// joker単体出しの時の処理
 				if (!reverse) {
@@ -1316,7 +1301,7 @@ public class GameField {
 			searchGroupMeld(i);
 		}
 		// 階段出しの格納
-		int num = 53 / players + 1;
+		int num = 53 / PLAYERS + 1;
 		for (int i = 3; i < num; i++) {
 			searchSequenceMeld(i);
 		}
@@ -1439,7 +1424,7 @@ public class GameField {
 	 */
 	public boolean isHaveJoker_myHand() {
 		boolean result = false;
-		if (playerHands[mySeat * cardNum] == 1) {// 自分の手札にjokerが存在する場合
+		if (playerHands[mySeat * CARDNUM] == 1) {// 自分の手札にjokerが存在する場合
 			result = true;
 		}
 		return result;
@@ -1468,14 +1453,14 @@ public class GameField {
 			message += "0" + myHands;
 		}
 
-		int[] cards = new int[cardNum];// カードの枚数
+		int[] cards = new int[CARDNUM];// カードの枚数
 		int num = 0;
-		for (int i = 0; i < cardNum; i++) {
+		for (int i = 0; i < CARDNUM; i++) {
 			cards[i] = 9;
 		}
-		for (int i = 0; i < cardNum; i++) { // カードの種類
-			for (int j = 0; j < players; j++) {// プレイヤーの人数
-				num = (j * cardNum) + i;
+		for (int i = 0; i < CARDNUM; i++) { // カードの種類
+			for (int j = 0; j < PLAYERS; j++) {// プレイヤーの人数
+				num = (j * CARDNUM) + i;
 				if (playerHands[num] == 1) { // プレイヤーの手札を持っている時
 					cards[i] = j;
 					break;
@@ -1486,7 +1471,7 @@ public class GameField {
 		message += mySeat;
 		/** プレイヤーの人数 **/
 		num = 0;
-		for (int i = 0; i < players; i++) {
+		for (int i = 0; i < PLAYERS; i++) {
 			if (!firstWonPlayer[i]) {
 				num++;
 			}
@@ -1494,24 +1479,52 @@ public class GameField {
 		message += num;
 
 		/** すべてのカードを入れる部分 **/
-		for (int i = 0; i < cardNum; i++) {
+		for (int i = 0; i < CARDNUM; i++) {
 			message += cards[i];
 		}
 		/** LockNumberの格納 **/
-		for (int i = 0; i < suitsNum; i++) {
-			if (lockNumber[i]) {
-				message += 1;
-			} else {
-				message += 0;
-			}
+
+		if ((lockNumber & BitData.SPADE) == 1) {
+			message += 1;
+		} else {
+			message += 0;
 		}
+		if ((lockNumber & BitData.HEART) == 1) {
+			message += 1;
+		} else {
+			message += 0;
+		}
+		if ((lockNumber & BitData.DAIYA) == 1) {
+			message += 1;
+		} else {
+			message += 0;
+		}
+		if ((lockNumber & BitData.CLOVER) == 1) {
+			message += 1;
+		} else {
+			message += 0;
+		}
+
 		/** PlaceSuitsの格納 **/
-		for (int i = 0; i < suitsNum; i++) {
-			if (placeSuits[i]) {
-				message += 1;
-			} else {
-				message += 0;
-			}
+		if ((placeSuits & BitData.SPADE) == 1) {
+			message += 1;
+		} else {
+			message += 0;
+		}
+		if ((placeSuits & BitData.HEART) == 1) {
+			message += 1;
+		} else {
+			message += 0;
+		}
+		if ((placeSuits & BitData.DAIYA) == 1) {
+			message += 1;
+		} else {
+			message += 0;
+		}
+		if ((placeSuits & BitData.CLOVER) == 1) {
+			message += 1;
+		} else {
+			message += 0;
 		}
 		/** rankの処理 */
 		num = rank;
@@ -1556,7 +1569,7 @@ public class GameField {
 		}
 
 		/** PASSPLayerの処理 **/
-		for (int i = 0; i < players; i++) {
+		for (int i = 0; i < PLAYERS; i++) {
 			if (passPlayer[i]) {
 				message += 1;
 			} else {
@@ -1564,7 +1577,7 @@ public class GameField {
 			}
 		}
 		/*** firstWonPlayerの処理 **/
-		for (int i = 0; i < players; i++) {
+		for (int i = 0; i < PLAYERS; i++) {
 			if (firstWonPlayer[i]) {
 				message += 1;
 			} else {
@@ -1573,7 +1586,7 @@ public class GameField {
 		}
 		/*** gradeの処理 **/
 		// grade
-		for (int i = 0; i < players; i++) {
+		for (int i = 0; i < PLAYERS; i++) {
 			message += grade[i];
 		}
 		System.out.println(point);
@@ -1598,8 +1611,8 @@ public class GameField {
 	 */
 	public int notWonPLayers() {
 		int result = 0;
-		for (int i = 0; i < players; i++) {
-			if (!wonPlayer[i]) {// プレイヤーがまだ勝利していない時
+		for (int i = 0; i < PLAYERS; i++) {
+			if (!BitData.checkPlayer_num(wonPlayer, i)) {// プレイヤーがまだ勝利していない時
 				result++;
 			}
 		}
@@ -1613,7 +1626,7 @@ public class GameField {
 	 */
 	public int allPLayersHands() {
 		int result = 0;
-		for (int i = 0; i < players; i++) {
+		for (int i = 0; i < PLAYERS; i++) {
 			result += playerHandsOfCards[i];
 		}
 		return result;
@@ -1682,7 +1695,7 @@ public class GameField {
 	 */
 	public boolean turnPlayerHaveJoker() {
 		boolean result = false;
-		if (playerHands[turnPlayer * cardNum] == 1)
+		if (playerHands[turnPlayer * CARDNUM] == 1)
 			result = true;
 		return result;
 	}
@@ -1740,35 +1753,35 @@ public class GameField {
 			num++;
 		}
 		num = num % 2;
-		for (int i = 0; i < cardNum; i++) {
+		for (int i = 0; i < CARDNUM; i++) {
 			if (num == 0) {
 				if (notLookCards[i] == 1
-						&& playerHands[i + cardNum * turnPlayer] == 0) {
+						&& playerHands[i + CARDNUM * turnPlayer] == 0) {
 					weight[counter] = 1;
 				}
 				counter++;
 			}
 		}
-		for (int i = 0; i < cardNum; i++) {
+		for (int i = 0; i < CARDNUM; i++) {
 			if (num == 1) {
 				if (notLookCards[i] == 1
-						&& playerHands[i + cardNum * turnPlayer] == 0) {
+						&& playerHands[i + CARDNUM * turnPlayer] == 0) {
 					weight[counter] = 1;
 				}
 			}
 			counter++;
 		}
-		for (int i = 0; i < cardNum; i++) {
+		for (int i = 0; i < CARDNUM; i++) {
 			if (num == 1) {
-				if (playerHands[i + cardNum * turnPlayer] == 1) {
+				if (playerHands[i + CARDNUM * turnPlayer] == 1) {
 					weight[counter] = 1;
 				}
 			}
 			counter++;
 		}
-		for (int i = 0; i < cardNum; i++) {
+		for (int i = 0; i < CARDNUM; i++) {
 			if (num == 0) {
-				if (playerHands[i + cardNum * turnPlayer] == 1) {
+				if (playerHands[i + CARDNUM * turnPlayer] == 1) {
 					weight[counter] = 1;
 				}
 			}
@@ -1926,7 +1939,7 @@ public class GameField {
 	 */
 	public void checkS3(int[] weight, int[] cards, int counter, int size) {
 		if (size == 1 && cards[0] == 0) {
-			for (int i = 0; i < players; i++) {
+			for (int i = 0; i < PLAYERS; i++) {
 				if (turnPlayer != i) {
 					if (playerHands[i * 53 + 1] == 1) {// スぺ3が残っている時
 						weight[counter] = 1;
@@ -1945,9 +1958,9 @@ public class GameField {
 	 *
 	 */
 	private int canLock(int[] weight, int[] cards, int size, int counter) {
-		if (!isLock() && state != State.RENEW && cards[0] <= 64) {// 縛りではない時
+		if (lockNumber != 0 && state != State.RENEW && cards[0] <= 64) {// 縛りではない時
 			int num = 0;
-			boolean[] place = getPlaceSuits();
+			int place = getPlaceSuits();
 			boolean flag = true;
 			for (int i = 0; i < size; i++) {
 				num = cards[i];
@@ -1955,7 +1968,7 @@ public class GameField {
 					continue;
 				}
 				num = (num - 1) / 13;
-				if (!place[num]) {
+				if (!BitData.checkSuits_num(place, num)) {
 					flag = false;
 					break;
 				}
@@ -2123,17 +2136,17 @@ public class GameField {
 	public boolean checkSequence(int rank, int card, boolean joker) {
 		int counter = 0;
 		boolean result = false;
-		if (rank + 1 < 14 && playerHands[turnPlayer * cardNum + card + 1] >= 1) {
+		if (rank + 1 < 14 && playerHands[turnPlayer * CARDNUM + card + 1] >= 1) {
 			counter++;
 			if (rank + 2 < 14
-					&& playerHands[turnPlayer * cardNum + card + 2] >= 1) {
+					&& playerHands[turnPlayer * CARDNUM + card + 2] >= 1) {
 				counter++;
 			}
 		}
-		if (rank - 1 > 0 && playerHands[turnPlayer * cardNum + card - 1] >= 1) {
+		if (rank - 1 > 0 && playerHands[turnPlayer * CARDNUM + card - 1] >= 1) {
 			counter++;
 			if (rank - 2 > 0
-					&& playerHands[turnPlayer * cardNum + card - 2] >= 1) {
+					&& playerHands[turnPlayer * CARDNUM + card - 2] >= 1) {
 				counter++;
 			}
 		}
@@ -2148,7 +2161,7 @@ public class GameField {
 
 	// getter setter
 	public final int getPlayers() {
-		return players;
+		return PLAYERS;
 	}
 
 	public final int getMySeat() {
@@ -2159,19 +2172,15 @@ public class GameField {
 		return state;
 	}
 
-	public final boolean isLock() {
-		return lock;
-	}
-
-	public final boolean[] getLockNumber() {
+	public int getLockNumber() {
 		return lockNumber;
 	}
 
-	public final boolean[] getPlaceSuits() {
+	public int getPlaceSuits() {
 		return placeSuits;
 	}
 
-	public final boolean[] getWonPlayer() {
+	public int getWonPlayer() {
 		return wonPlayer;
 	}
 

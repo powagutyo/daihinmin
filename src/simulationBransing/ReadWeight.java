@@ -32,7 +32,7 @@ public class ReadWeight extends Thread {
 	}
 
 	public void run() {
-		if (InitSetting.readMode == 0) {
+		if (InitSetting.READMODE == 0) {
 			int size = textNames.length;
 			File file;
 			BufferedReader bf;
@@ -67,7 +67,7 @@ public class ReadWeight extends Thread {
 				}
 			}
 			wd.setFinish(true);// 全ての読み込みが完了
-		}else if(InitSetting.readMode == 1){
+		}else if(InitSetting.READMODE == 1){
 			int size = textNames.length;
 			File file;
 			BufferedReader bf;

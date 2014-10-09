@@ -58,8 +58,8 @@ public class CalcWeightRange extends Thread {
 		double[] weight = new double[InitSetting.WEIGHTNUMBER];
 		int authenticationCode = 0;
 
-		int range_m = InitSetting.range_myHands / 2;
-		int range_a = InitSetting.range_allHands / 2;
+		int range_m = InitSetting.RANGE＿MYHANDS / 2;
+		int range_a = InitSetting.RANGE＿ALLHANDS / 2;
 		double visit = 0.0;
 
 		try {

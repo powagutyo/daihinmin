@@ -27,7 +27,7 @@ public class MCPlayer extends BotSkeleton {
 	/** 勝利した順に入れる **/
 	private int winCounter = 1;
 
-	private final boolean modeC = InitSetting.modeC;
+	private final boolean modeC = InitSetting.MODE_C;
 
 	@Override
 	/**

@@ -15,6 +15,7 @@ import monteCalro.FieldData;
 import monteCalro.MakeHand;
 import monteCalro.MyData;
 import monteCalro.Utility;
+import object.BitData;
 import object.InitSetting;
 import object.WeightData;
 
@@ -31,11 +32,11 @@ public class MonteCalro {
 	 *
 	 */
 
-	private final int count = InitSetting.COUNT;// 回す数
+	private static final int COUNT = InitSetting.COUNT;// 回す数
 
-	private final int players = 5;// プレイヤーの数
+	private static final int PLAYERS = 5;// プレイヤーの数
 
-	private final int cardNum = 53;// カード大きさ
+	private static final int CARDNUM = 53;// カード大きさ
 
 	private int mySeat = 0;// 自分の座席番号
 
@@ -76,7 +77,7 @@ public class MonteCalro {
 
 		final int arraySize = arrayListMelds.size(); // 出せる役の枚数
 
-		GameField gf = new GameField(players, bs, fd, md);
+		GameField gf = new GameField(PLAYERS, bs, fd, md);
 
 		int putRandom = 0; // 最初に出す手をランダムに選ぶ
 
@@ -97,15 +98,22 @@ public class MonteCalro {
 
 		/** 変数の初期化終了 **/
 
+		int firstWonPlayer = 0;
+		int counter = 0;
+		for(boolean flag :gf.getFirstWonPlayer()){
+			if(flag )
+				firstWonPlayer = firstWonPlayer | BitData.getPLayersNumber_i(counter);
+			counter++;
+		}
 		for (int i = 0; i < arraySize; i++) {// UCBの値を初期化させる
 			arrayListMelds.get(i).setTurnPlayer(mySeat); // 自分の順番にする
-			arrayListMelds.get(i).initUCB(gf.getFirstWonPlayer());
+			arrayListMelds.get(i).initUCB(firstWonPlayer);
 		}
 
-		gf.initPLaceGameFiled(copyPlayerHands(mh.getPlayersHands()));//gfの場のカード情報とfirstGFの初期化
+		gf.initPLaceGameFiled(copyPlayerHands(mh.getPlayersHands()));// gfの場のカード情報とfirstGFの初期化
 
 		// メインループ
-		for (int playout = 1; playout <= count; playout++) {
+		for (int playout = 1; playout <= COUNT; playout++) {
 
 			if (InitSetting.DEBUGMODE) {
 				System.out.println("playout" + playout);
@@ -124,7 +132,7 @@ public class MonteCalro {
 
 			size = 0;
 
-			learning = InitSetting.learning_w;
+			learning = InitSetting.LEARNING_W;
 
 			while (true) { // 1プレイ分のループ
 
@@ -139,7 +147,7 @@ public class MonteCalro {
 							childGf = new GameField(gf);
 						}
 
-						gf.useSimulationBarancing(InitSetting.learning, wd);
+						gf.useSimulationBarancing(InitSetting.LEARNING, wd);
 
 					} else {// 子ノードを持っている時
 						putRandom = getUCBRandomMeldData(
@@ -231,7 +239,7 @@ public class MonteCalro {
 			}
 
 		}
-		if (InitSetting.gameRecord)
+		if (InitSetting.GAMERECORD)
 			gf.getFirstGf().writeText(point); // 棋譜データ作成
 		return arrayListMelds.get(resultPos).getMeld();
 
@@ -282,7 +290,7 @@ public class MonteCalro {
 		MeldData md = null;
 		boolean reverse = gf.isReverse(); // 革命か否か
 
-		if (InitSetting.putHandMode == 2 && !reverse) {// 重みを使う時
+		if (InitSetting.putHandMode == 2) {// 重みを使う時
 			boolean doWeight = false; // 重みの計算を行うかどうかの判定用
 			boolean first = true; // 重みの計算が最初かどうかの計算
 
@@ -345,11 +353,11 @@ public class MonteCalro {
 	 * @return コピーされた配列
 	 */
 	private int[] copyPlayerHands(int[][] copyHands) {
-		int[] result = new int[players * cardNum];
+		int[] result = new int[PLAYERS * CARDNUM];
 
-		for (int i = 0; i < players; i++) {
-			for (int j = 0; j < cardNum; j++) {
-				result[i * cardNum + j] = copyHands[i][j];
+		for (int i = 0; i < PLAYERS; i++) {
+			for (int j = 0; j < CARDNUM; j++) {
+				result[i * CARDNUM + j] = copyHands[i][j];
 			}
 		}
 
@@ -372,20 +380,14 @@ public class MonteCalro {
 		ArrayList<MeldData> arrayMeld = new ArrayList<MeldData>();
 
 		// JOKER単体出しの時にスぺ3を出す
-		if (myhand.contains(Card.S3)) {// スペードの3を持っているか否か
-			if (placeMeld != null) {// renewじゃない時
-				if (placeMeld.type() == Meld.Type.SINGLE) {// 1枚出しの時
-					if (placeMeld.rank() == Rank.JOKER_HIGHEST
-							|| placeMeld.rank() == Rank.JOKER_LOWEST) {// JOKERの時
-						Cards S3 = Cards.EMPTY_CARDS;
-						S3 = S3.add(Card.S3);
-						Melds meldC3 = Melds.parseSingleMelds(S3);
-						arrayMeld.add(new MeldData(meldC3.get(0)));
-						arrayMeld.add(new MeldData());
-						return arrayMeld;
-					}
-				}
-			}
+		if (myhand.contains(Card.S3) && placeMeld != null && placeMeld.type() == Meld.Type.SINGLE && (placeMeld.rank() == Rank.JOKER_HIGHEST
+				|| placeMeld.rank() == Rank.JOKER_LOWEST)) {// スペードの3を持っているか否か
+			Cards S3 = Cards.EMPTY_CARDS;
+			S3 = S3.add(Card.S3);
+			Melds meldC3 = Melds.parseSingleMelds(S3);
+			arrayMeld.add(new MeldData(meldC3.get(0)));
+			arrayMeld.add(new MeldData());
+			return arrayMeld;
 		}
 
 		Melds resultMelds = Melds.EMPTY_MELDS;
