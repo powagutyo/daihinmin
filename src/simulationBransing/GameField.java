@@ -1707,8 +1707,7 @@ public class GameField {
 		counter = canLock(weight, cards, size, counter);
 		counter = canReverse(weight, cards, size, counter);
 		counter = haveJoker(weight, cards, size, counter);
-		// counter = cardsSize(weight, cards, size, counter);
-		counter += 5;
+		counter = cardsSize(weight, cards, size, counter);
 		// 場の特性 53 * 4
 		if (first) {
 			counter = weightPlaceCards(weight, size, counter);

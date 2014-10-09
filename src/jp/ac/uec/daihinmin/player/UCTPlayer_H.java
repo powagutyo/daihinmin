@@ -12,6 +12,7 @@ import jp.ac.uec.daihinmin.card.Melds;
 import jp.ac.uec.daihinmin.card.Rank;
 import monteCalro.FieldData;
 import monteCalro.MakeHand;
+import monteCalro.MonteCalro_02;
 import monteCalro.MyData;
 import monteCalro.Utility;
 import object.InitSetting;
@@ -509,6 +510,11 @@ public class UCTPlayer_H extends BotSkeleton {
 
 		Meld meld = MonteCalro.MonteCalroPlay(this, myData, fieldData, mh, wd);
 		System.out.println("1手の時間" + (System.currentTimeMillis() -start));
+
+		if(InitSetting.learning){//学習を行う際はUCTで手を決定する
+			return MonteCalro_02.MonteCalroPlay(this, myData, fieldData);
+		}
+
 		return meld;
 		/*
 		 * }catch(Exception e){
