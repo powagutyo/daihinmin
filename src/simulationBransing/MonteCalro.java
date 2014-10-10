@@ -15,7 +15,6 @@ import monteCalro.FieldData;
 import monteCalro.MakeHand;
 import monteCalro.MyData;
 import monteCalro.Utility;
-import object.BitData;
 import object.InitSetting;
 import object.WeightData;
 
@@ -98,13 +97,8 @@ public class MonteCalro {
 
 		/** 変数の初期化終了 **/
 
-		int firstWonPlayer = 0;
-		int counter = 0;
-		for(boolean flag :gf.getFirstWonPlayer()){
-			if(flag )
-				firstWonPlayer = firstWonPlayer | BitData.getPLayersNumber_i(counter);
-			counter++;
-		}
+		int firstWonPlayer = gf.getFirstWonPlayer();
+
 		for (int i = 0; i < arraySize; i++) {// UCBの値を初期化させる
 			arrayListMelds.get(i).setTurnPlayer(mySeat); // 自分の順番にする
 			arrayListMelds.get(i).initUCB(firstWonPlayer);

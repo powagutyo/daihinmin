@@ -444,24 +444,22 @@ public class MakeHand {
 	 *            swapするカード
 	 * @return
 	 */
-	private int[][] swapHand(int[][] resultHands, int mySeat, int putCard,
-			int exchangeCard) {
+	private void swapHand(int mySeat, int putCard,int exchangeCard) {
 		// 自分の手札のswap
-		resultHands[mySeat][exchangeCard] = 0;
-		playersHands[mySeat][(exchangeCard - 1) % 13 + 1]--;
+		playersHands[mySeat][exchangeCard] = 0;
+		playersHandSize[mySeat][(exchangeCard - 1) % 13 + 1]--;
 		for (int i = 0; i < players; i++) {
 			if (i == mySeat) {// 自分手札の時
 				continue;
 			}
-			if (resultHands[i][putCard] == 1) {// swapする対象を見つけた時
-				resultHands[i][putCard] = 0;
-				resultHands[i][exchangeCard] = 1;
-				playersHands[i][(exchangeCard - 1) % 13 + 1]++;
-				playersHands[i][(putCard - 1) % 13 + 1]--;
+			if (playersHands[i][putCard] == 1) {// swapする対象を見つけた時
+				playersHands[i][putCard] = 0;
+				playersHands[i][exchangeCard] = 1;
+				playersHandSize[i][(exchangeCard - 1) % 13 + 1]++;
+				playersHandSize[i][(putCard - 1) % 13 + 1]--;
 				break;
 			}
 		}
-		return resultHands;
 	}
 
 	/****
@@ -518,22 +516,14 @@ public class MakeHand {
 		if (meld != PASS && meld != null) {
 			int num = 0;
 			if (mySeat == seat) {// 自分の番だった時
-
 				for (Card card : meld.asCards()) {
 					num = Utility.cardParseInt(card); // カードに変更する
 
 					playersHands[mySeat][num] = 0;
 					playersHandSize[mySeat][(num - 1) % 13 + 1]--;
 				}
-				System.out.println();
 			} else {// 相手の手番の時
 				swapCards(meld, seat, fd);
-
-				for (Card card : meld.asCards()) {
-					num = Utility.cardParseInt(card); // カードに変更する
-
-				}
-
 			}
 		}
 
@@ -550,31 +540,23 @@ public class MakeHand {
 	 *            FeildDataクラス
 	 */
 	private void swapCards(Meld meld, int seat, FieldData fd) {
-		int[][] resultHands = new int[players][];
-		for (int i = 0; i < players; i++) {
-			resultHands[i] = playersHands[i].clone();
-		}
-		int num = 0;
+				int num = 0;
 		ArrayList<Integer> arrayInt = new ArrayList<Integer>();
 
-		for (int i = 0; i < 53; i++) {// 出した人のプレイヤーの手札を全て抜き出す
-			if (playersHands[seat][i] == 1) {
-				arrayInt.add(i);
-			}
-		}
 		int rank = 0;
 		int exchangeCard = 0;
 		for (Card card : meld.asCards()) {// 全ての手に対してカードをswapする
+			arrayInt.clear();
+			for (int i = 0; i < 53; i++) {// 出した人のプレイヤーの手札を全て抜き出す
+				if (playersHands[seat][i] == 1) {
+					arrayInt.add(i);
+				}
+			}
 			num = Utility.cardParseInt(card); // カード番号を格納
 			rank = (num - 1) % 13 + 1;
 			exchangeCard = searchToLookLikeRank(arrayInt, rank);
-			resultHands = swapHand(resultHands, seat, num, exchangeCard);// ここでカードをswapする
+			swapHand(seat, num, exchangeCard);// ここでカードをswapする
 		}
-		// playersHandsに適応させる
-		for (int i = 0; i < players; i++) {
-			playersHands[i] = resultHands[i];
-		}
-
 	}
 
 	/**

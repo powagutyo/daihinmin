@@ -8,7 +8,6 @@ import jp.ac.uec.daihinmin.card.Card;
 import jp.ac.uec.daihinmin.card.Cards;
 import jp.ac.uec.daihinmin.card.Meld;
 import monteCalro.Utility;
-import object.BitData;
 
 /**
  * 出せる役のデータ
@@ -164,10 +163,7 @@ public class MeldData implements Cloneable {
 	 * @param firstWonPlayer
 	 */
 	public void initUCB(int firstWonPlayer) {
-		for (int i = 0; i < 5; i++) {
-			if (!BitData.checkPlayer_num(firstWonPlayer, i))// 勝ってない人の時
-				playerNum++;
-		}
+		playerNum = 5 - Integer.bitCount(firstWonPlayer);
 		// UCBの中央値にする
 		for (int i = playerNum; i > 0; i--) {// 残りのプレイヤーの合計ポイントを計算
 			UCB += i;

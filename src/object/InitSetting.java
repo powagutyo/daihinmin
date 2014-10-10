@@ -19,7 +19,7 @@ public class InitSetting {
 
 	public static final boolean GAMERECORD = false;
 
-	public static final boolean DOREADWEIGHT = false;
+	public static final boolean DOREADWEIGHT = true;
 
 	/*** 重みを読み込む時に使用する。0が訪問回数を割るやつ、1がそのまま重みを読み込むやつ ***/
 	public static final int READMODE = 1;
