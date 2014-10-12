@@ -16,6 +16,7 @@ import monteCalro.MakeHand;
 import monteCalro.MyData;
 import monteCalro.Utility;
 import object.InitSetting;
+import object.ObjectPool;
 import object.WeightData;
 
 /***
@@ -34,8 +35,6 @@ public class MonteCalro {
 	private static final int COUNT = InitSetting.COUNT;// 回す数
 
 	private static final int PLAYERS = 5;// プレイヤーの数
-
-	private static final int CARDNUM = 53;// カード大きさ
 
 	private int mySeat = 0;// 自分の座席番号
 
@@ -76,7 +75,9 @@ public class MonteCalro {
 
 		final int arraySize = arrayListMelds.size(); // 出せる役の枚数
 
-		GameField gf = new GameField(PLAYERS, bs, fd, md);
+		GameField parentGF = new GameField(PLAYERS, bs, fd, md);
+
+		GameField playGF = null;
 
 		int putRandom = 0; // 最初に出す手をランダムに選ぶ
 
@@ -97,14 +98,14 @@ public class MonteCalro {
 
 		/** 変数の初期化終了 **/
 
-		int firstWonPlayer = gf.getFirstWonPlayer();
+		int firstWonPlayer = parentGF.getFirstWonPlayer();
 
 		for (int i = 0; i < arraySize; i++) {// UCBの値を初期化させる
 			arrayListMelds.get(i).setTurnPlayer(mySeat); // 自分の順番にする
 			arrayListMelds.get(i).initUCB(firstWonPlayer);
 		}
 
-		gf.initPLaceGameFiled(copyPlayerHands(mh.getPlayersHands()));// gfの場のカード情報とfirstGFの初期化
+		parentGF.initPLaceGameFiled(mh.getPlayersHands());// gfの場のカード情報とfirstGFの初期化
 
 		// メインループ
 		for (int playout = 1; playout <= COUNT; playout++) {
@@ -113,8 +114,10 @@ public class MonteCalro {
 				System.out.println("playout" + playout);
 			}
 			start = System.currentTimeMillis();
-
-			gf.firstClone();// gfを最初の状態に戻す
+			if (!first) {
+				playGF.release();
+			}
+			playGF = parentGF.clone();// gfを最初の状態に戻す
 
 			meldDataOrder.clear(); // 1ゲームごとにMeldDataに出したものを記憶するために初期化
 
@@ -138,36 +141,36 @@ public class MonteCalro {
 								&& placeMeldData.isSearchChildren()
 								&& !growUpChildren) { // 木を成長させる時
 							growUpChildren = true;
-							childGf = new GameField(gf);
+							childGf = playGF.clone();
 						}
 
-						gf.useSimulationBarancing(InitSetting.LEARNING, wd);
+						playGF.useSimulationBarancing(InitSetting.LEARNING, wd);
 
 					} else {// 子ノードを持っている時
 						putRandom = getUCBRandomMeldData(
-								placeMeldData.getChildren(), gf, wd);
+								placeMeldData.getChildren(), playGF, wd);
 
 						meldDataOrder.add(putRandom);// 木の通った順番を記憶する
 
 						placeMeldData = placeMeldData.getChildren().get(
 								putRandom);// 場のMeldDataのコピー
-						gf.renewPlace_MeldData(placeMeldData);
+						playGF.renewPlace_MeldData(placeMeldData);
 					}
 				} else {// 最初の一回目の時
 
 					// UCBの値でランダムに木を選ぶ
-					putRandom = getUCBRandomMeldData(arrayListMelds, gf, wd);
+					putRandom = getUCBRandomMeldData(arrayListMelds, playGF, wd);
 
 					meldDataOrder.add(putRandom);// 木の通った順番を記憶する
 
 					placeMeldData = arrayListMelds.get(putRandom);// 場のMeldDataのコピー
 
-					gf.renewPlace_MeldData(placeMeldData);
+					playGF.renewPlace_MeldData(placeMeldData);
 
 					first = false;
 				}
 
-				if (gf.checkGoalPlayer()) { // 上がった人の判定
+				if (playGF.checkGoalPlayer()) { // 上がった人の判定
 					if (InitSetting.DEBUGMODE)
 						System.out.println("時間は"
 								+ (System.currentTimeMillis() - start) + "ms");
@@ -175,45 +178,73 @@ public class MonteCalro {
 					break;// 自分上がった時
 
 				}
-				gf.endTurn();// ターン等々の処理
+				playGF.endTurn();// ターン等々の処理
 
 			}
-			oneGameUpdate(arrayListMelds, playout, gf, meldDataOrder); // 得点などの状態の処理
+			oneGameUpdate(arrayListMelds, playout, playGF, meldDataOrder); // 得点などの状態の処理
 			// Weightの学習率の変更
 			learning = learning * 0.99;
 			/** 木の成長部分 **/
 
 			if (growUpChildren) {
-
-				childGf.getPutHand(); // 出せる手の候補を探索
-
-				size = childGf.getPair().size();
-
+				ArrayList<Long> list = childGf.getPutHand(); // 出せる手の候補を探索
+				size = list.size();
+				int[] cards;
+				int counter = 0;
+				int cardSize = 0;
+				long num = 0;
 				while (true) {
-
-					for (int i = 0; i < size; i++) {
+					if (size == 1 && list.get(0) == 0) {// PASSの処理
+						cards = ObjectPool.getArrayInt(1);
+						cards[0] = 256;
 						placeMeldData
-								.addChildren(new MeldData(childGf.getPair()
-										.get(i).clone()),
+								.addChildren(new MeldData(cards.clone()),
 										childGf.getTurnPlayer(),
 										childGf.getWonPlayer());
-					}
-					if (size == 1 && childGf.getPair().get(0)[0] == 256) {// PASSしかない時
+
 						childGf.turnPLayerDoPass();
 
 						childGf.checkGoalPlayer();
 
 						childGf.endTurn();// ターン等々の処理
 
-						childGf.getPutHand(); // 出せる手の候補が返ってくる
+						list.clear();
 
-						size = childGf.getPair().size();
+						list = childGf.getPutHand(); // 出せる手の候補が返ってくる
+
+						size = list.size();
 
 						placeMeldData = placeMeldData.getChildren().get(0); // PASSの子供に変更する
 
+						ObjectPool.releaseArrayInt(cards);
+
 					} else {
 
+						for (int i = 0; i < size; i++) {
+							counter = 0;
+							num = list.get(i);
+							cardSize = Long.bitCount(num);
+							if (cardSize == 0) {
+								cards = ObjectPool.getArrayInt(1);
+								cards[0] = 256;
+							} else {
+								cards = ObjectPool.getArrayInt(cardSize);
+								for (int j = 0; j < 53; j++) {
+									if(cardSize == counter)
+										break;
+
+									if ((num & (long) 1 << j) != 0) {
+										cards[counter] = j;
+										counter++;
+									}
+								}
+							}
+							placeMeldData
+									.addChildren(new MeldData(cards.clone()), childGf.getTurnPlayer(), childGf.getWonPlayer());
+							ObjectPool.releaseArrayInt(cards);
+						}
 						break;
+
 					}
 				}
 				growUpChildren = false;
@@ -234,7 +265,13 @@ public class MonteCalro {
 
 		}
 		if (InitSetting.GAMERECORD)
-			gf.getFirstGf().writeText(point); // 棋譜データ作成
+			parentGF.writeText(point); // 棋譜データ作成
+		if (childGf != null) {
+			childGf.release();
+		}
+		playGF.release();
+		parentGF.release();
+
 		return arrayListMelds.get(resultPos).getMeld();
 
 	}
@@ -294,7 +331,7 @@ public class MonteCalro {
 			double[] pai_sita = new double[size];
 			int[] weight = new int[InitSetting.WEIGHTNUMBER];
 			double[] sita;// 重みの特徴
-			grade = gf.getGrade()[gf.getTurnPlayer()];// 自分のランク
+			grade = gf.getMyGrade();// 自分のランク
 			authenticationCode = gf.getAuthenticationCode_i();// 認証コード
 
 			for (int i = 0; i < size; i++) {// すべての評価値を足し合わせる
@@ -337,25 +374,6 @@ public class MonteCalro {
 		}
 
 		return pos;
-	}
-
-	/***
-	 * 手札の配列をコピーするメソッド
-	 *
-	 * @param copyHands
-	 *            コピーしたい手札配列
-	 * @return コピーされた配列
-	 */
-	private int[] copyPlayerHands(int[][] copyHands) {
-		int[] result = new int[PLAYERS * CARDNUM];
-
-		for (int i = 0; i < PLAYERS; i++) {
-			for (int j = 0; j < CARDNUM; j++) {
-				result[i * CARDNUM + j] = copyHands[i][j];
-			}
-		}
-
-		return result;
 	}
 
 	/**

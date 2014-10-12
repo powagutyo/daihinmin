@@ -9,7 +9,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.util.ArrayList;
-import java.util.Map;
 
 import object.InitSetting;
 import object.WeightData;
@@ -48,9 +47,9 @@ public class SimulationBalancing {
 	 */
 	public void preparelearning(GameField gameField) {
 		File file;// ファイル
-		int num = gameField.getPlayerHandsOfCards()[gameField.getTurnPlayer()]; // ターンプレイヤーの手札の枚数を取得
+		int num = gameField.turnPLayerHaveHand(gameField.getTurnPlayer()); // ターンプレイヤーの手札の枚数を取得
 		String authenticationCode = ""; // 認証用のString
-		int grade = gameField.getGrade()[gameField.getMySeat()];
+		int grade = gameField.getMyGrade();
 		// 自分の手札
 		if (num >= 10) {
 			file = new File("./gameRecord/myHand_" + num + "_" + grade + ".txt");
@@ -96,8 +95,7 @@ public class SimulationBalancing {
 	 * @throws IOException
 	 */
 	public void learningPhase(BufferedReader bf, String authenticationCode, GameField nowGF) {
-		GameField gf = new GameField();
-		gf.setSb(nowGF.getSb());
+		GameField gf = nowGF.clone();
 		int counter = 0;
 		// 方策パラメータΘの初期化
 		for (int i = 0; i < weightNumber; i++) {
@@ -126,12 +124,10 @@ public class SimulationBalancing {
 				// 学習に入る
 
 				miniMax = gf.restoreGameRecord(gameRecord);// 棋譜データから盤面を復元
-				gf.initFirstGF(); // 一番最初GameFeildクラスを作成
+				gf = nowGF.clone();
+				expectedReward = calcExpectedReward(gf,nowGF); // 期待報酬を求め
 
-
-				expectedReward = calcExpectedReward(gf); // 期待報酬を求め
-
-				meanGradient = calcMeanGradient(gf); // 平均勾配を計算
+				meanGradient = calcMeanGradient(gf,nowGF); // 平均勾配を計算
 
 				update_sita(miniMax, expectedReward, meanGradient);
 
@@ -150,11 +146,11 @@ public class SimulationBalancing {
 	 *            GameFeild
 	 * @return 期待報酬
 	 */
-	public double calcExpectedReward(GameField gf) {
+	public double calcExpectedReward(GameField gf,GameField nowGF) {
 		double result = 0.0;
 		int counter = 0;
 		while (counter <= LEARNINGNUMBER) {
-			gf.firstClone();// gfを最初の状態に戻す
+			gf = nowGF.clone();// gfを最初の状態に戻す
 
 			while (true) {
 				gf.useSimulationBarancing(false, null); // 場の状態を確認し、出した手を場に反映させる
@@ -177,7 +173,7 @@ public class SimulationBalancing {
 	 *            　GameFeild
 	 * @return
 	 */
-	public double[] calcMeanGradient(GameField gf) {
+	public double[] calcMeanGradient(GameField gf, GameField nowGF) {
 		int counter = 0;
 		double[] meanGradient = new double[weightNumber];
 
@@ -186,7 +182,7 @@ public class SimulationBalancing {
 		int visit = 0;
 
 		while (counter <= MEANGRADIENTNUMBER) {
-			gf.firstClone();// gfを最初の状態に戻す
+			gf = nowGF.clone();
 			visit = 0;
 			while (true) {
 				visit += gf.useSimulationBarancing_m(result, 0); // 場の状態を確認し、出した手を場に反映させる
@@ -232,14 +228,14 @@ public class SimulationBalancing {
 	 *            GameFeild
 	 * @return
 	 */
-	public int putHand(Map<Integer, int[]> map, GameField gf) {
-		int size = map.size();
+	public int putHand(ArrayList<Long> list, GameField gf) {
+		int size = list.size();
 		double[] points = new double[size];
 		double result = 0;
 		double sum = 0;
 		boolean first = true;
 		for (int i = 0; i < size; i++) {// 一手一手の特徴を求める
-			weight = gf.getWeight(weight, map.get(i), first);
+			weight = gf.getWeight(weight, list.get(i), first);
 			result = Caluculater.calcPai_sita(this.weight_sita, weight); // 全てに対するπΘを計算
 			points[i] = result;
 			first = false;
@@ -293,7 +289,7 @@ public class SimulationBalancing {
 	 *            GameFeild
 	 * @return
 	 */
-	public int putHand_m(Map<Integer, int[]> map, GameField gf, double[] meanGradient) {
+	public int putHand_m(ArrayList<Long> map, GameField gf, double[] meanGradient) {
 		int size = map.size();
 		double[] result = new double[weightNumber];
 		double[] points = new double[size];
@@ -362,7 +358,7 @@ public class SimulationBalancing {
 	 *            GameFeild
 	 * @return
 	 */
-	public int putHand_simulataion(Map<Integer, int[]> map, GameField gf, WeightData wd) {
+	public int putHand_simulataion(ArrayList<Long> map, GameField gf, WeightData wd) {
 		int size = map.size();
 
 		double[] points = new double[size];
@@ -373,7 +369,7 @@ public class SimulationBalancing {
 		boolean flag = true; //全ての重みが何も入っていない時の処理用変数
 
 		int pos = 0;
-		int grade = gf.getGrade()[gf.getTurnPlayer()];
+		int grade = gf.getMyGrade();
 		boolean reverse = gf.isReverse();
 		int authenticationCode = gf.getAuthenticationCode_i();
 
@@ -431,7 +427,7 @@ public class SimulationBalancing {
 		if (gf.isReverse()) {
 			r = "r";
 		}
-		r += gf.getGrade()[gf.getTurnPlayer()];
+		r += gf.getMyGrade();
 		File file = new File(InitSetting.TEXT＿PAISITA＿UP + r + InitSetting.TEXT＿PAISITA＿UNDER);
 		String authenticationCode = gf.getAuthenticationCode(); // 認証用のString
 		String result = "";
