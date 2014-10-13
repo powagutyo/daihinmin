@@ -85,21 +85,21 @@ public class Caluculater {
 	 *            今いるプレイヤーの人数
 	 * @return
 	 */
-	public static double calcUCB_TUNED(double playout, MeldData md) {
+	public static double calcUCB_TUNED(double playout, GameField gf) {
 		double UCB = 0.0;
-		double visit = md.getN();
-		double point = md.getPoint();
+		double visit = gf.getVisit();
+		double point = gf.getWon();
 		double num = 0.0;
 		double winPro;
 		if (visit == 0) {// niが0の時は0.5とする
-			visit = 0;
-			return md.getUCB();
+			visit = 1;
+			winPro = gf.getUCB();
 		} else {
 			winPro = point / (5.0 * visit);
 		}
-		int[] winPoint = md.getWinNum();
+
 		for (int i = 0; i < 5; i++) {
-			num += Math.pow((i + 1) / 5.0, 2) * winPoint[i];
+			num += Math.pow((i + 1) / 5.0, 2) * gf.returnWinPoints(i+1);
 		}
 		double x = num / visit;
 		double logn = (Math.log(playout) / visit);
@@ -116,7 +116,6 @@ public class Caluculater {
 		 * UCBの計算式
 		 */
 		UCB = winPro + Math.sqrt(num * logn);
-
 
 		return UCB;
 	}

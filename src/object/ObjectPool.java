@@ -3,11 +3,15 @@ package object;
 import java.util.ArrayList;
 import java.util.List;
 
+import simulationBransing.GameField;
 import simulationBransing.SimulationBalancing;
 
 public class ObjectPool {
 
 	public static SimulationBalancing sb = new SimulationBalancing();
+
+	private static List<GameField> arrayGameField;
+	private static List<ArrayList<GameField>> arrayGameFields;
 
 	private static List<int[]> pair1;
 	private static List<int[]> pair2;
@@ -25,6 +29,40 @@ public class ObjectPool {
 	private static List<long[]> conbine;
 
 	private static ArrayList<ArrayList<Long>> putHand;
+
+	public static ArrayList<GameField> getGameFields(){
+		if(arrayGameFields == null)
+			arrayGameFields = new ArrayList<ArrayList<GameField>>(64);
+		int size = arrayGameFields.size();
+		if(size == 0){
+			return new ArrayList<GameField>(64);
+		}else{
+			return arrayGameFields.remove(size-1);
+		}
+	}
+	public static void releaseGameFeilds(ArrayList<GameField> array){
+		array.clear();
+		arrayGameFields.add(array);
+	}
+
+
+
+	public static GameField getGameField(){
+		if(arrayGameField == null)
+			arrayGameField = new ArrayList<GameField>(256);
+		int size = arrayGameField.size();
+		if(size == 0 ){
+			return new GameField();
+		}else{
+			return arrayGameField.remove(size -1);
+		}
+	}
+
+	public static void releaseGameField(GameField gf){
+		arrayGameField.add(gf);
+	}
+
+
 
 
 	public static int[] getArrayInt(int size){

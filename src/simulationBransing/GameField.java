@@ -39,6 +39,22 @@ public class GameField implements Cloneable {
 
 	private int myGrade; // 自分のランク
 
+	/**** 木構造を取るための変数群 ***/
+	/** UCBの値 ***/
+	private double UCB;
+	/** 訪問回数 ***/
+	private int visit;
+	/** 出したカードの役 **/
+	private long yaku;
+
+	/** 勝利した勝ち点 ***/
+	private int won;
+
+	/*** 何の子供を持っているかどうかの識別子　0 は持っていない ***/
+	private int HaveChildNumber;
+
+	private boolean canGrowUpTree;
+
 	private State state = State.EMPTY;// 初期状態の変数
 
 	/** 縛りのマーク 4bit */
@@ -52,11 +68,16 @@ public class GameField implements Cloneable {
 	/** PASSしたかどうかの判定用の変数 5bit ***/
 	private int passPlayer;
 
+	private int point_5;
+	private int point_4;
+	private int point_3;
+	private int point_2;
+	private int point_1;
+
 	/** 座席のランク 25bit 今は使ってない **/
 	private int grade;
 	/*** 見えていないカード　long 53bit **/
 	private long notLookCards;
-	// private int[] notLookCards = new int[CARDNUM];
 
 	/** 3～2の数を1～13で表したもの -1がrenew **/
 	private int rank;// 場に出されているランク
@@ -70,7 +91,7 @@ public class GameField implements Cloneable {
 
 	private int putLastPlayer;// 最後に出した人の座席番号
 
-	// プレイヤーの手札　53bit× players
+	// プレイヤーの手札 53bit× players
 	private long[] playersHands;
 
 	/**
@@ -102,6 +123,89 @@ public class GameField implements Cloneable {
 		turnPlayer = mySeat;
 
 		init(bs, fd);
+	}
+
+	/**
+	 * 一番最初に行う初期化
+	 *
+	 * @param playerNum
+	 * @param bs
+	 * @param fd
+	 * @param md
+	 */
+	public void firstInit(int playerNum, BotSkeleton bs, FieldData fd, MyData md) {
+		initChild();
+
+		playersHands = ObjectPool.getPLayersHands();
+		int counter = 0;
+		for (boolean flag : fd.getWonPlayer()) {
+			if (flag)
+				firstWonPlayer = firstWonPlayer | (1 << counter);
+			counter++;
+		}
+		counter = 0;
+		for (int num : fd.getGrade()) {
+			if (mySeat == num)
+				myGrade = num;
+			grade = grade | 1 << (counter * 5 + num - 1);
+			counter++;
+		}
+
+		mySeat = md.getSeat();
+
+		turnPlayer = mySeat;
+
+		init(bs, fd);
+
+	}
+
+	/**
+	 * 子供の時に行う初期化
+	 */
+	public void initChild() {
+		UCB = 1;
+		visit = 0;
+		won = 0;
+		HaveChildNumber = 0;
+		point_1 = 0;
+		point_2 = 0;
+		point_3 = 0;
+		point_4 = 0;
+		point_5 = 0;
+	}
+
+	/**
+	 * 順位ごとの勝利した回数を返すメソッド
+	 *
+	 * @param num
+	 * @return
+	 */
+	public int returnWinPoints(int num) {
+		switch (num) {
+		case 1:
+			return point_1;
+		case 2:
+			return point_2;
+
+		case 3:
+			return point_3;
+		case 4:
+			return point_4;
+		case 5:
+			return point_5;
+
+		default:
+			break;
+
+		}
+		return 0;
+	}
+
+	/**
+	 * 空のコンストラクタ
+	 */
+	public GameField() {
+
 	}
 
 	@Override
@@ -416,7 +520,27 @@ public class GameField implements Cloneable {
 	 * @return point
 	 */
 	public int returnWinPoint() {
-		return 6 - Integer.bitCount(wonPlayer);
+		int num = 6 - Integer.bitCount(wonPlayer);
+		switch (num) {
+		case 1:
+			point_1++;
+			break;
+		case 2:
+			point_2++;
+			break;
+		case 3:
+			point_3++;
+			break;
+		case 4:
+			point_4++;
+			break;
+		case 5:
+			point_5++;
+			break;
+		default:
+			break;
+		}
+		return num;
 	}
 
 	/**
@@ -483,7 +607,6 @@ public class GameField implements Cloneable {
 		return result;
 	}
 
-
 	/**
 	 * ターンプレイヤーの更新 renewの時の処理を含む
 	 */
@@ -502,7 +625,22 @@ public class GameField implements Cloneable {
 			if (turnPlayer >= PLAYERS)// プレイヤーの人数把握
 				turnPlayer = 0;
 		}
+	}
 
+	/**
+	 * 木の成長を行うかどうかの判定
+	 *
+	 * @return 木の成長を行うか否か
+	 */
+	public boolean doGrowUpTree() {
+		if (!canGrowUpTree)// 木が成長できないような木構造の場合
+			return false;
+		if (HaveChildNumber != 0)// 子供を持っている時の場合
+			return false;
+		if (visit >= InitSetting.THRESHOLD - 1) {// 訪問回数が閾値を超えていた時
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -559,7 +697,11 @@ public class GameField implements Cloneable {
 	 *            場に出された役
 	 */
 	public void updatePlace(long putHand) {
-
+		yaku = putHand;
+		if (putHand == 0) {
+			passPlayer = passPlayer | (1 << turnPlayer);
+			return;
+		}
 		int num = 0;
 		// カードサイズの更新
 		numberOfCardSize = Long.bitCount(putHand);
@@ -1179,11 +1321,7 @@ public class GameField implements Cloneable {
 			default:
 				break;
 			}
-			if (list.get(pos) == 0) { // PASSの時
-				passPlayer = passPlayer | (1 << turnPlayer);
-			} else {
-				updatePlace(list.get(pos));
-			}
+			updatePlace(list.get(pos));
 		}
 		ObjectPool.releasePutHand(list);
 
@@ -1214,11 +1352,7 @@ public class GameField implements Cloneable {
 		} else {// PASS以外の時
 			int pos = ObjectPool.sb.putHand_m(list, this, meanGradient);// シミュレーションバランシングで手を決定する
 			visit++;
-			if (list.get(pos) == 0) { // PASSの時
-				passPlayer = passPlayer | (1 << turnPlayer);
-			} else {
-				updatePlace(list.get(pos));
-			}
+			updatePlace(list.get(pos));
 		}
 		ObjectPool.releasePutHand(list);
 
@@ -1516,19 +1650,19 @@ public class GameField implements Cloneable {
 		}
 		int[] cards;
 		int size = Long.bitCount(num);
-		if(size == 0){
+		if (size == 0) {
 			cards = ObjectPool.getArrayInt(1);
 			cards[0] = 256;
 
-		}else{
+		} else {
 			cards = ObjectPool.getArrayInt(size);
-			if(size == 1 && num == 0){
+			if (size == 1 && num == 0) {
 				cards[0] = 256;
-			}else{
-				for(int i= 0;i<53;i++){
-					if((num & (ONE & i) )!= 0 ){
+			} else {
+				for (int i = 0; i < 53; i++) {
+					if ((num & (ONE & i)) != 0) {
 						cards[counter] = i;
-						counter ++;
+						counter++;
 					}
 				}
 			}
@@ -1928,6 +2062,7 @@ public class GameField implements Cloneable {
 	 */
 	public void release() {
 		ObjectPool.releasePLayersHands(playersHands);
+		playersHands = null;
 	}
 
 	// getter setter
@@ -1993,5 +2128,53 @@ public class GameField implements Cloneable {
 
 	public int getMyGrade() {
 		return myGrade;
+	}
+
+	public long getYaku() {
+		return yaku;
+	}
+
+	public boolean isCanGrowUpTree() {
+		return canGrowUpTree;
+	}
+
+	public void setCanGrowUpTree(boolean canGrowUpTree) {
+		this.canGrowUpTree = canGrowUpTree;
+	}
+
+	public int getHaveChildNumber() {
+		return HaveChildNumber;
+	}
+
+	public void setHaveChildNumber(int haveChildNumber) {
+		HaveChildNumber = haveChildNumber;
+	}
+
+	public double getUCB() {
+		return UCB;
+	}
+
+	public void setUCB(double uCB) {
+		UCB = uCB;
+	}
+
+	public int getVisit() {
+		return visit;
+	}
+
+	public void setVisit(int visit) {
+		this.visit = visit;
+	}
+
+	public int getWon() {
+		return won;
+	}
+
+	public void setWon(int won) {
+		this.won = won;
+	}
+
+	public void setWonPlayer(int wonPlayer) {
+		this.wonPlayer = wonPlayer;
 	}
 }

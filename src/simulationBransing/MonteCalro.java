@@ -75,17 +75,30 @@ public class MonteCalro {
 
 		final int arraySize = arrayListMelds.size(); // 出せる役の枚数
 
-		GameField parentGF = new GameField(PLAYERS, bs, fd, md);
+		GameField parentGF = ObjectPool.getGameField();
+		GameField playGF = ObjectPool.getGameField();
+		GameField childGf = ObjectPool.getGameField();
 
-		GameField playGF = null;
+		parentGF.firstInit(PLAYERS, bs, fd, md);
+		parentGF.initPLaceGameFiled(mh.getPlayersHands());// gfの場のカード情報とfirstGFの初期化
+
+		GameFieldTree.setParent(parentGF);
+		long number = 0;
+		long[] cards = new long[arraySize];
+		for(int i= 0;i<arraySize;i++){
+			number = 0;
+			for(int num : arrayListMelds.get(i).getCards()){
+				number = number | ((long)1 << num);
+			}
+			cards[i] = number;
+		}
+		GameFieldTree.initChildren(GameFieldTree.parent, cards, wd);//子供の作成
 
 		int putRandom = 0; // 最初に出す手をランダムに選ぶ
 
 		boolean first = true; // 1回目の時だけ自分の役集合から出すので特殊である。
 
 		boolean growUpChildren = false;
-
-		GameField childGf = null;
 
 		int size = 0;
 
@@ -94,7 +107,6 @@ public class MonteCalro {
 		/** MeldDataの出した順番を格納する 最後のサイズはそれ以上木が作られることがないため **/
 		ArrayList<Integer> meldDataOrder = new ArrayList<Integer>(256);
 
-		MeldData placeMeldData = null;
 
 		/** 変数の初期化終了 **/
 
@@ -104,8 +116,6 @@ public class MonteCalro {
 			arrayListMelds.get(i).setTurnPlayer(mySeat); // 自分の順番にする
 			arrayListMelds.get(i).initUCB(firstWonPlayer);
 		}
-
-		parentGF.initPLaceGameFiled(mh.getPlayersHands());// gfの場のカード情報とfirstGFの初期化
 
 		// メインループ
 		for (int playout = 1; playout <= COUNT; playout++) {
@@ -125,14 +135,20 @@ public class MonteCalro {
 
 			childGf = null;
 
-			placeMeldData = null;
-
 			size = 0;
 
 			learning = InitSetting.LEARNING_W;
 
 			while (true) { // 1プレイ分のループ
 
+				if(playGF.getHaveChildNumber() == 0){//子供を持っていないとき
+					playGF.useSimulationBarancing(InitSetting.LEARNING, wd);
+				}else{
+					putRandom = getUCBRandomMeldData(arrayListMelds, playGF, wd);
+
+					meldDataOrder.add(putRandom);// 木の通った順番を記憶する
+
+				}
 				if (!first) {// 最初の1回目ではない時
 
 					if (!placeMeldData.isHaveChildren()) {// 場に出したMeldDataが子ノードを持っていない時
@@ -251,7 +267,6 @@ public class MonteCalro {
 			}
 
 		}
-
 		// 実際に出す手を返す
 		double point = -1024;
 		int resultPos = 0;
@@ -266,11 +281,11 @@ public class MonteCalro {
 		}
 		if (InitSetting.GAMERECORD)
 			parentGF.writeText(point); // 棋譜データ作成
-		if (childGf != null) {
-			childGf.release();
-		}
-		playGF.release();
-		parentGF.release();
+
+		childGf.release();
+		ObjectPool.releaseGameField(childGf);
+		GameFieldTree.realseAllGameFeild();//全てのゲーム
+
 
 		return arrayListMelds.get(resultPos).getMeld();
 
