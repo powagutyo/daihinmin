@@ -17,6 +17,7 @@ import monteCalro.MyData;
 import monteCalro.Utility;
 import object.InitSetting;
 import object.WeightData;
+import simulationBransing.GameFieldTree;
 import simulationBransing.MonteCalro;
 import simulationBransing.ReadWeight;
 
@@ -55,6 +56,8 @@ public class UCTPlayer_H extends BotSkeleton {
 	private WeightData wd = new WeightData();
 	/*** 重みを読み込むメソッド **/
 	private ReadWeight rw;
+	/***GameFieldTreeクラス**/
+	private GameFieldTree gft;
 
 	private final boolean modeC = InitSetting.MODE_C;
 	/** 全員の手札群 **/
@@ -179,6 +182,7 @@ public class UCTPlayer_H extends BotSkeleton {
 		super.gameStarted();
 		if (fieldData == null) { // 初回だけは生成する
 			fieldData = new FieldData();
+			gft = new GameFieldTree();
 			mh = new MakeHand(players); // MaKeHandクラスの初期化
 		} else {
 			for (int i = 0; i < players; i++) {
@@ -482,7 +486,7 @@ public class UCTPlayer_H extends BotSkeleton {
 		}
 
 		if (turn > 1000) {// お互いずっとパスしてしまう時の保険用の処理
-			return MonteCalro.MonteCalroPlay(this, myData, fieldData, mh, wd);
+			return MonteCalro.MonteCalroPlay(this, myData, fieldData, mh, wd,gft);
 		}
 		/* 前回自分の出した手の場合の処理 */
 		if (doRenew) {// renewの状態
@@ -508,7 +512,7 @@ public class UCTPlayer_H extends BotSkeleton {
 
 		// new MakeHand(5).initHands(myData, fieldData);
 
-		Meld meld = MonteCalro.MonteCalroPlay(this, myData, fieldData, mh, wd);
+		Meld meld = MonteCalro.MonteCalroPlay(this, myData, fieldData, mh, wd,gft);
 		System.out.println("1手の時間" + (System.currentTimeMillis() -start));
 
 		if(InitSetting.LEARNING){//学習を行う際はUCTで手を決定する

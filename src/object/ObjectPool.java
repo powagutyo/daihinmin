@@ -24,6 +24,9 @@ public class ObjectPool {
 	private static List<int[]> pair9;
 	private static List<int[]> pair10;
 	private static List<int[]> pair11;
+	
+	private static List<ArrayList<Integer>> arrayInt;
+	private static List<double[]> arrayDouble;
 
 	private static List<long[]> playersHands;
 	private static List<long[]> conbine;
@@ -44,9 +47,39 @@ public class ObjectPool {
 		array.clear();
 		arrayGameFields.add(array);
 	}
+	
+	public static ArrayList<Integer> getArrayInt(){
+		if(arrayInt == null){
+			arrayInt = new ArrayList<ArrayList<Integer>>(32);
+		}
+		int size = arrayInt.size();
+		if(size == 0){
+			return new ArrayList<Integer>(64);
+		}else{
+			return arrayInt.get(size-1);
+		}
+	}
+	public static void releaseArrayInt(ArrayList<Integer> array){
+		array.clear();
+		arrayInt.add(array);
+	}
 
-
-
+	public static double[] getArrayDouble(){
+		if(arrayDouble == null){
+			arrayDouble = new ArrayList<double[]>(32);
+		}
+		int size = arrayDouble.size();
+		if(size == 0){
+			return new double[64];
+		}else{
+			return arrayDouble.get(size-1);
+		}
+	}
+	public static void releaseArrayDouble(double[] array){
+		arrayDouble.add(array);
+	}
+	
+	
 	public static GameField getGameField(){
 		if(arrayGameField == null)
 			arrayGameField = new ArrayList<GameField>(256);

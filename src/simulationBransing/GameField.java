@@ -158,6 +158,38 @@ public class GameField implements Cloneable {
 		init(bs, fd);
 
 	}
+	/**
+	 * UCBの値を更新する
+	 * @param playout プレイアウトの回数
+	 * @param winPoint 勝ち点
+	 * @param update 更新するかどうか
+	 */
+	public void upDateUCB(int playout, int winPoint, boolean update){
+		if(update){
+			visit++;
+			won += winPoint;
+			switch (winPoint) {
+			case 1:
+				point_1++;
+				break;
+			case 2:
+				point_2++;
+				break;
+			case 3:
+				point_3++;
+				break;
+			case 4:
+				point_4++;
+				break;
+			case 5:
+				point_5++;
+				break;
+			default:
+				break;
+			}	
+		}
+		UCB = Caluculater.calcUCB_TUNED(playout, this);
+	}
 
 	/**
 	 * 子供の時に行う初期化
@@ -172,6 +204,9 @@ public class GameField implements Cloneable {
 		point_3 = 0;
 		point_4 = 0;
 		point_5 = 0;
+	}
+	public double getWinPoint(){
+		return (double)won/(double)visit;
 	}
 
 	/**
@@ -521,27 +556,10 @@ public class GameField implements Cloneable {
 	 */
 	public int returnWinPoint() {
 		int num = 6 - Integer.bitCount(wonPlayer);
-		switch (num) {
-		case 1:
-			point_1++;
-			break;
-		case 2:
-			point_2++;
-			break;
-		case 3:
-			point_3++;
-			break;
-		case 4:
-			point_4++;
-			break;
-		case 5:
-			point_5++;
-			break;
-		default:
-			break;
-		}
+	
 		return num;
 	}
+	
 
 	/**
 	 * ゲーム終了時のポイントを返す

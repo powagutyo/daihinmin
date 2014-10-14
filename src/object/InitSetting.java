@@ -6,7 +6,7 @@ public class InitSetting {
 	/*** デバッグモードかどうか **/
 	public static final boolean DEBUGMODE = false;
 	/** UCTを回す回数 **/
-	public static final int COUNT = 10000;// 回す数
+	public static final int COUNT = 2000;// 回す数
 	/** 木の閾値 ***/
 	public static final int THRESHOLD = 20;// 閾値
 	/*** 読み切りプログラムを使うかどうか */

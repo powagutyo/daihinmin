@@ -49,8 +49,8 @@ public class MonteCalro {
 	 *            MyData
 	 */
 	public static Meld MonteCalroPlay(BotSkeleton bs, MyData md, FieldData fd,
-			MakeHand mh, WeightData wd) {
-		return new MonteCalro().play(bs, md, fd, mh, wd);
+			MakeHand mh, WeightData wd, GameFieldTree gft) {
+		return new MonteCalro().play(bs, md, fd, mh, wd, gft);
 	}
 
 	/**
@@ -62,7 +62,7 @@ public class MonteCalro {
 	 *            MyData
 	 */
 	private Meld play(BotSkeleton bs, MyData md, FieldData fd, MakeHand mh,
-			WeightData wd) {
+			WeightData wd, GameFieldTree gft) {
 
 		ArrayList<MeldData> arrayListMelds = searchOfMeld(bs);// 出せる役を探索
 
@@ -77,36 +77,36 @@ public class MonteCalro {
 
 		GameField parentGF = ObjectPool.getGameField();
 		GameField playGF = ObjectPool.getGameField();
-		GameField childGf = ObjectPool.getGameField();
 
 		parentGF.firstInit(PLAYERS, bs, fd, md);
 		parentGF.initPLaceGameFiled(mh.getPlayersHands());// gfの場のカード情報とfirstGFの初期化
 
-		GameFieldTree.setParent(parentGF);
+		gft.init(parentGF);
+
 		long number = 0;
 		long[] cards = new long[arraySize];
-		for(int i= 0;i<arraySize;i++){
+		for (int i = 0; i < arraySize; i++) {
 			number = 0;
-			for(int num : arrayListMelds.get(i).getCards()){
-				number = number | ((long)1 << num);
+			for (int num : arrayListMelds.get(i).getCards()) {
+				if (num >= 64) {
+					number = 0;
+				} else {
+					number = number | ((long) 1 << num);
+				}
 			}
 			cards[i] = number;
 		}
-		GameFieldTree.initChildren(GameFieldTree.parent, cards, wd);//子供の作成
+
+		gft.firstInitChildren(gft.getParent(), cards, wd);// 子供の作成
 
 		int putRandom = 0; // 最初に出す手をランダムに選ぶ
 
-		boolean first = true; // 1回目の時だけ自分の役集合から出すので特殊である。
-
 		boolean growUpChildren = false;
-
-		int size = 0;
 
 		long start;
 
 		/** MeldDataの出した順番を格納する 最後のサイズはそれ以上木が作られることがないため **/
-		ArrayList<Integer> meldDataOrder = new ArrayList<Integer>(256);
-
+		ArrayList<Integer> meldDataOrder = ObjectPool.getArrayInt();
 
 		/** 変数の初期化終了 **/
 
@@ -124,68 +124,30 @@ public class MonteCalro {
 				System.out.println("playout" + playout);
 			}
 			start = System.currentTimeMillis();
-			if (!first) {
-				playGF.release();
-			}
+
 			playGF = parentGF.clone();// gfを最初の状態に戻す
 
 			meldDataOrder.clear(); // 1ゲームごとにMeldDataに出したものを記憶するために初期化
-
-			first = true; // 最初の1回目はtrue
-
-			childGf = null;
-
-			size = 0;
 
 			learning = InitSetting.LEARNING_W;
 
 			while (true) { // 1プレイ分のループ
 
-				if(playGF.getHaveChildNumber() == 0){//子供を持っていないとき
+				if (playGF.getHaveChildNumber() == 0) {// 子供を持っていないとき
+
 					playGF.useSimulationBarancing(InitSetting.LEARNING, wd);
-				}else{
-					putRandom = getUCBRandomMeldData(arrayListMelds, playGF, wd);
+
+				} else {
+					putRandom = gft.getUCBPos(playGF.getHaveChildNumber());
 
 					meldDataOrder.add(putRandom);// 木の通った順番を記憶する
 
+					playGF = gft.returnGameFeild(playGF.getHaveChildNumber(), putRandom).clone();
+
+					growUpChildren = playGF.doGrowUpTree(); // 木が成長できるかどうかの探索
+
+					continue;
 				}
-				if (!first) {// 最初の1回目ではない時
-
-					if (!placeMeldData.isHaveChildren()) {// 場に出したMeldDataが子ノードを持っていない時
-						// 木を成長させるかの判定
-						if (placeMeldData.getN() >= InitSetting.THRESHOLD - 1
-								&& placeMeldData.isSearchChildren()
-								&& !growUpChildren) { // 木を成長させる時
-							growUpChildren = true;
-							childGf = playGF.clone();
-						}
-
-						playGF.useSimulationBarancing(InitSetting.LEARNING, wd);
-
-					} else {// 子ノードを持っている時
-						putRandom = getUCBRandomMeldData(
-								placeMeldData.getChildren(), playGF, wd);
-
-						meldDataOrder.add(putRandom);// 木の通った順番を記憶する
-
-						placeMeldData = placeMeldData.getChildren().get(
-								putRandom);// 場のMeldDataのコピー
-						playGF.renewPlace_MeldData(placeMeldData);
-					}
-				} else {// 最初の一回目の時
-
-					// UCBの値でランダムに木を選ぶ
-					putRandom = getUCBRandomMeldData(arrayListMelds, playGF, wd);
-
-					meldDataOrder.add(putRandom);// 木の通った順番を記憶する
-
-					placeMeldData = arrayListMelds.get(putRandom);// 場のMeldDataのコピー
-
-					playGF.renewPlace_MeldData(placeMeldData);
-
-					first = false;
-				}
-
 				if (playGF.checkGoalPlayer()) { // 上がった人の判定
 					if (InitSetting.DEBUGMODE)
 						System.out.println("時間は"
@@ -197,95 +159,22 @@ public class MonteCalro {
 				playGF.endTurn();// ターン等々の処理
 
 			}
-			oneGameUpdate(arrayListMelds, playout, playGF, meldDataOrder); // 得点などの状態の処理
-			// Weightの学習率の変更
+			gft.upDateTree(meldDataOrder, playGF.returnWinPoint());
+
 			learning = learning * 0.99;
-			/** 木の成長部分 **/
 
 			if (growUpChildren) {
-				ArrayList<Long> list = childGf.getPutHand(); // 出せる手の候補を探索
-				size = list.size();
-				int[] cards;
-				int counter = 0;
-				int cardSize = 0;
-				long num = 0;
-				while (true) {
-					if (size == 1 && list.get(0) == 0) {// PASSの処理
-						cards = ObjectPool.getArrayInt(1);
-						cards[0] = 256;
-						placeMeldData
-								.addChildren(new MeldData(cards.clone()),
-										childGf.getTurnPlayer(),
-										childGf.getWonPlayer());
-
-						childGf.turnPLayerDoPass();
-
-						childGf.checkGoalPlayer();
-
-						childGf.endTurn();// ターン等々の処理
-
-						list.clear();
-
-						list = childGf.getPutHand(); // 出せる手の候補が返ってくる
-
-						size = list.size();
-
-						placeMeldData = placeMeldData.getChildren().get(0); // PASSの子供に変更する
-
-						ObjectPool.releaseArrayInt(cards);
-
-					} else {
-
-						for (int i = 0; i < size; i++) {
-							counter = 0;
-							num = list.get(i);
-							cardSize = Long.bitCount(num);
-							if (cardSize == 0) {
-								cards = ObjectPool.getArrayInt(1);
-								cards[0] = 256;
-							} else {
-								cards = ObjectPool.getArrayInt(cardSize);
-								for (int j = 0; j < 53; j++) {
-									if(cardSize == counter)
-										break;
-
-									if ((num & (long) 1 << j) != 0) {
-										cards[counter] = j;
-										counter++;
-									}
-								}
-							}
-							placeMeldData
-									.addChildren(new MeldData(cards.clone()), childGf.getTurnPlayer(), childGf.getWonPlayer());
-							ObjectPool.releaseArrayInt(cards);
-						}
-						break;
-
-					}
-				}
+				gft.initChildren(gft.parent, wd);
 				growUpChildren = false;
 			}
-
 		}
-		// 実際に出す手を返す
-		double point = -1024;
-		int resultPos = 0;
-		double x = 0;
-		for (int i = 0; i < arraySize; i++) {
-			x = arrayListMelds.get(i).getPointDivideN();
-			if (x > point) {
-				point = x;
-				resultPos = i;
-			}
-
-		}
+		int resultPos = gft.returnPutPos();
+		// TODO 棋譜データの更新
 		if (InitSetting.GAMERECORD)
-			parentGF.writeText(point); // 棋譜データ作成
+			 parentGF.writeText(0); // 棋譜データ作成
 
-		childGf.release();
-		ObjectPool.releaseGameField(childGf);
-		GameFieldTree.realseAllGameFeild();//全てのゲーム
-
+		gft.realseAllGameFeild();// 全てのゲーム
+		ObjectPool.releaseArrayInt(meldDataOrder);
 
 		return arrayListMelds.get(resultPos).getMeld();
 
@@ -313,7 +202,7 @@ public class MonteCalro {
 		arrayListMelds.get(order.get(0)).updateData(point); // 自身のデータを更新させる
 
 		for (MeldData md : arrayListMelds) {// すべてのMeldDataを更新する
-			md.setUCB(Caluculater.calcUCB_TUNED(playout, md));
+			// md.setUCB(Caluculater.calcUCB_TUNED(playout, md));
 		}
 		arrayListMelds.get(order.get(0)).updateData(point, order);// 子ノードのデータを更新
 	}
@@ -407,8 +296,10 @@ public class MonteCalro {
 		ArrayList<MeldData> arrayMeld = new ArrayList<MeldData>();
 
 		// JOKER単体出しの時にスぺ3を出す
-		if (myhand.contains(Card.S3) && placeMeld != null && placeMeld.type() == Meld.Type.SINGLE && (placeMeld.rank() == Rank.JOKER_HIGHEST
-				|| placeMeld.rank() == Rank.JOKER_LOWEST)) {// スペードの3を持っているか否か
+		if (myhand.contains(Card.S3)
+				&& placeMeld != null
+				&& placeMeld.type() == Meld.Type.SINGLE
+				&& (placeMeld.rank() == Rank.JOKER_HIGHEST || placeMeld.rank() == Rank.JOKER_LOWEST)) {// スペードの3を持っているか否か
 			Cards S3 = Cards.EMPTY_CARDS;
 			S3 = S3.add(Card.S3);
 			Melds meldC3 = Melds.parseSingleMelds(S3);

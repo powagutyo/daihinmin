@@ -232,7 +232,7 @@ public class MeldData implements Cloneable {
 			visitNum += child.getN();
 		}
 		for (MeldData child : myMeldData.getChildren()) {// 全ての子ノードのUCBの値を計算する
-			child.setUCB(Caluculater.calcUCB_TUNED(visitNum, child));
+		//	child.setUCB(Caluculater.calcUCB_TUNED(visitNum, child));
 		}
 
 		MeldData md = myMeldData.getChildren().get(num);
