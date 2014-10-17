@@ -15,11 +15,10 @@ import monteCalro.MakeHand;
 import monteCalro.MonteCalro_02;
 import monteCalro.MyData;
 import monteCalro.Utility;
+import object.DataConstellation;
 import object.InitSetting;
-import object.WeightData;
 import simulationBransing.GameFieldTree;
 import simulationBransing.MonteCalro;
-import simulationBransing.ReadWeight;
 
 public class UCTPlayer_H extends BotSkeleton {
 	private final int players = 5;
@@ -41,7 +40,10 @@ public class UCTPlayer_H extends BotSkeleton {
 	private int winCounter = 1;
 	/** カード交換を行った場合は true **/
 	private boolean exchangeCard = false;
-
+	/*** データ群 **/
+	private DataConstellation dc;
+	/** ゲームフィールド用の木構造 ***/
+	private GameFieldTree gft;
 	/*** 自分が相手に渡したカード群 **/
 	private Cards handOverCard;
 	/*** カード交換したプレイヤー番号 ***/
@@ -52,12 +54,6 @@ public class UCTPlayer_H extends BotSkeleton {
 	private int[] weight = new int[275];
 	/** ターン数を数える **/
 	private int turn = 0;
-	/** 重みのデータ群 **/
-	private WeightData wd = new WeightData();
-	/*** 重みを読み込むメソッド **/
-	private ReadWeight rw;
-	/***GameFieldTreeクラス**/
-	private GameFieldTree gft;
 
 	private final boolean modeC = InitSetting.MODE_C;
 	/** 全員の手札群 **/
@@ -105,12 +101,11 @@ public class UCTPlayer_H extends BotSkeleton {
 					}
 				}
 				notPairHand = notPairHand.remove(Card.D3);// ダイヤの3を抜く
-				//8のカードの除去
+				// 8のカードの除去
 				notPairHand = notPairHand.remove(Card.S8);
 				notPairHand = notPairHand.remove(Card.D8);
 				notPairHand = notPairHand.remove(Card.C8);
 				notPairHand = notPairHand.remove(Card.H8);
-
 
 				notPairHand = notPairHand.extract(Cards.rankOver(Rank.TEN));// 7以下の数字かどうかを調べる
 
@@ -182,8 +177,9 @@ public class UCTPlayer_H extends BotSkeleton {
 		super.gameStarted();
 		if (fieldData == null) { // 初回だけは生成する
 			fieldData = new FieldData();
-			gft = new GameFieldTree();
 			mh = new MakeHand(players); // MaKeHandクラスの初期化
+			gft = new GameFieldTree();
+			dc = new DataConstellation();
 		} else {
 			for (int i = 0; i < players; i++) {
 				fieldData.setGrade(playersInformation().getSeatOfPlayer(i),
@@ -202,13 +198,6 @@ public class UCTPlayer_H extends BotSkeleton {
 		fieldData.init();// フィールドデータを初期化する
 
 		if (firstGame) {
-			/** 重みの読み込み部 **/
-			wd = new WeightData();
-			if (InitSetting.DOREADWEIGHT) { // 重みの読み込み
-				rw = new ReadWeight(wd);
-				rw.start();
-			}
-
 			for (int i = 0; i < players; i++) {
 				playersCard.add(new ArrayList<Card>());
 			}
@@ -334,7 +323,8 @@ public class UCTPlayer_H extends BotSkeleton {
 		grade[number] = winCounter;// プレイヤーにランクを挿入
 
 		winCounter++;// ランク1つ下げる
-
+		
+		System.out.println(playersInformation().getSeatOfPlayer(number));
 		fieldData.setWonPlayer(playersInformation().getSeatOfPlayer(number));// 勝ったプレイヤーを記憶させてあげる
 	}
 
@@ -477,7 +467,7 @@ public class UCTPlayer_H extends BotSkeleton {
 		// try{
 		firstUpdate();// 最初の更新を行う
 		long start = System.currentTimeMillis();
-		if (wd.isFinish()) {// 重みの読み込みが終わった時
+		if (dc.getWd().isFinish()) {// 重みの読み込みが終わった時
 			InitSetting.putHandMode = 2; // 重みを用いる戦術に変更
 		}
 
@@ -486,7 +476,7 @@ public class UCTPlayer_H extends BotSkeleton {
 		}
 
 		if (turn > 1000) {// お互いずっとパスしてしまう時の保険用の処理
-			return MonteCalro.MonteCalroPlay(this, myData, fieldData, mh, wd,gft);
+			return MonteCalro.MonteCalroPlay(this, myData, fieldData, mh, gft, dc);
 		}
 		/* 前回自分の出した手の場合の処理 */
 		if (doRenew) {// renewの状態
@@ -512,10 +502,10 @@ public class UCTPlayer_H extends BotSkeleton {
 
 		// new MakeHand(5).initHands(myData, fieldData);
 
-		Meld meld = MonteCalro.MonteCalroPlay(this, myData, fieldData, mh, wd,gft);
-		System.out.println("1手の時間" + (System.currentTimeMillis() -start));
+		Meld meld = MonteCalro.MonteCalroPlay(this, myData, fieldData, mh, gft, dc);
+		System.out.println("1手の時間" + (System.currentTimeMillis() - start));
 
-		if(InitSetting.LEARNING){//学習を行う際はUCTで手を決定する
+		if (InitSetting.LEARNING) {// 学習を行う際はUCTで手を決定する
 			return MonteCalro_02.MonteCalroPlay(this, myData, fieldData);
 		}
 

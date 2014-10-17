@@ -3,7 +3,6 @@ package simulationBransing;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import object.InitSetting;
 import object.ObjectPool;
 import object.WeightData;
 
@@ -19,7 +18,7 @@ public class GameFieldTree {
 
 	public GameFieldTree() {
 		childrenGameFeild = new HashMap<Integer, ArrayList<GameField>>();
-		visit = new int[256];
+		visit = new int[1024];
 		childDepth = 1;
 	}
 
@@ -31,7 +30,7 @@ public class GameFieldTree {
 		double[] points = new double[size];
 		for (int i = 0; i < size; i++) {
 			points[i] = gameList.get(i).getUCB();
-			sum = points[i];
+			sum += points[i];
 		}
 		sum = sum * Math.random();
 		int pos = 0;
@@ -39,15 +38,19 @@ public class GameFieldTree {
 			sum = sum - points[i];
 			if (sum < 0) {
 				pos = i;
+				break;
 			}
 		}
 		return pos;
 	}
-	public GameField returnGameFeild(int childNumber, int pos){
+
+	public GameField returnGameFeild(int childNumber, int pos) {
 		return childrenGameFeild.get(childNumber).get(pos);
 	}
+
 	/**
 	 * 木を更新するメソッド
+	 *
 	 * @param order
 	 * @param winPoint
 	 */
@@ -59,9 +62,9 @@ public class GameFieldTree {
 		int orderNum = 0;
 		int orderCounter = 0;
 		int pos = 0;
-		parentGF = parent;
+		parentGF = this.parent.clone();
 		while (true) {
-			if(orderSize <= orderCounter)
+			if (orderSize <= orderCounter)
 				break;
 			pos = parentGF.getHaveChildNumber();
 			arrayGF = childrenGameFeild.get(pos);
@@ -84,12 +87,13 @@ public class GameFieldTree {
 	 * すべてのGameFieldクラスをリリースする
 	 */
 	public void realseAllGameFeild() {
-		int size = 0;
+		int size = childrenGameFeild.size();
+		int arraySize = 0;
 		ArrayList<GameField> ag;
-		for (Integer key : childrenGameFeild.keySet()) {
-			ag = childrenGameFeild.remove(key);
-			size = ag.size();
-			for (int i = 0; i < size; i++) {
+		for (int i = 1; i <= size; i++) {
+			ag = childrenGameFeild.get(i);
+			arraySize = ag.size();
+			for (int j = 0; j < arraySize; j++) {
 				ObjectPool.releaseGameField(ag.remove(0));
 			}
 			ObjectPool.releaseGameFeilds(ag);
@@ -99,7 +103,7 @@ public class GameFieldTree {
 		childDepth = 1;
 	}
 
-	public void init(GameField p){
+	public void init(GameField p) {
 		childrenGameFeild.clear();
 		parent = p;
 		childDepth = 1;
@@ -129,31 +133,36 @@ public class GameFieldTree {
 		parent.setHaveChildNumber(childDepth); // どの子供を持っているかの番号を渡す
 		childDepth++;
 	}
+
 	/**
 	 * 親を成長させる
 	 *
 	 * @param parent
 	 * @param wd
 	 */
-	public void initChildren(GameField parent, WeightData wd) {
+	public void initChildren(ArrayList<Integer> order, WeightData wd) {
+		int size = order.size();
+		GameField GF = this.parent.clone();
+		for (int i = 0; i < size; i++) {
+			GF = childrenGameFeild.get(GF.getHaveChildNumber()).get(order.get(i));
+		}
 		ArrayList<GameField> gamelist = ObjectPool.getGameFields();
-		ArrayList<Long> putHand = parent.getPutHand();
-		int size = putHand.size();
+		ArrayList<Long> putHand = GF.getPutHand();
+		size = putHand.size();
 		GameField gf;
 		for (int i = 0; i < size; i++) {
 			gf = ObjectPool.getGameField();
-			gf = parent.clone();
-			gf = growUpGameField(gf,putHand.get(i), false, wd);
+			gf = GF.clone();
+			gf = growUpGameField(gf, putHand.get(i), false, wd);
 			gf.initChild(); // 子供の時のみ行う初期化
+			gf.setFirstWonPlayer(parent.getFirstWonPlayer());
 			gamelist.add(gf);
 		}
 		childrenGameFeild.put(childDepth, gamelist);
-		parent.setHaveChildNumber(childDepth); // どの子供を持っているかの番号を渡す
+		GF.setHaveChildNumber(childDepth); // どの子供を持っているかの番号を渡す
 		ObjectPool.releasePutHand(putHand);
 		childDepth++;
 	}
-
-
 
 	/**
 	 * 親につける子供を探索するメソッド
@@ -163,37 +172,38 @@ public class GameFieldTree {
 	 */
 	public static GameField growUpGameField(GameField gf, long num, boolean first,
 			WeightData wd) {
-		boolean flag = false;
+		ArrayList<Long> putHand = null;
 		while (true) {
-			if (first) {
-				if (num != 0)
-					flag = true;
-				gf.updatePlace(num);
-			} else {
-				gf.useSimulationBarancing(InitSetting.LEARNING, wd);
-				if (gf.getYaku() != 0)
-					flag = true;
-			}
+			gf.updatePlace(num);
+
 			if (gf.checkGoalPlayer()) { // 上がった人の判定
 				gf.setCanGrowUpTree(false);// 木を成長できないように変更する
+				break;
 			}
 			gf.endTurn();// ターン等々の処理
-			if (flag)
+			putHand = gf.getPutHand();
+			if (putHand.size() == 1) {
+				num = putHand.get(0);
+			} else {
 				break;
+			}
+		}
+		if (putHand != null) {
+			ObjectPool.releasePutHand(putHand);
 		}
 		return gf;
 	}
 
-	public int returnPutPos(){
+	public int returnPutPos() {
 		int childNumber = parent.getHaveChildNumber();
 		ArrayList<GameField> arrayGF = childrenGameFeild.get(childNumber);
 		int size = arrayGF.size();
 		double point = 0;
 		double max = -1024;
 		int pos = -1;
-		for(int i = 0;i<size;i++){
+		for (int i = 0; i < size; i++) {
 			point = arrayGF.get(i).getWinPoint();
-			if(max < point){
+			if (max < point) {
 				max = point;
 				pos = i;
 			}
@@ -204,8 +214,4 @@ public class GameFieldTree {
 	public GameField getParent() {
 		return parent;
 	}
-
-
-
-
 }

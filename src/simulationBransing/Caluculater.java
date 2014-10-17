@@ -100,7 +100,7 @@ public class Caluculater {
 		for (int i = 0; i < 5; i++) {
 			num += Math.pow((i + 1) / 5.0, 2) * gf.returnWinPoints(i+1);
 		}
-		
+
 		double x = num / visit;
 
 		double y = Math.pow(winPro, 2);
@@ -115,9 +115,6 @@ public class Caluculater {
 		 * UCBの計算式
 		 */
 		UCB = winPro + Math.sqrt(num *  Math.log(playout) / visit);
-		if(Double.isNaN(UCB)){
-			System.out.println();
-		}
 		return UCB;
 	}
 }

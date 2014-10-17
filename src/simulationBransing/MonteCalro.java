@@ -15,6 +15,7 @@ import monteCalro.FieldData;
 import monteCalro.MakeHand;
 import monteCalro.MyData;
 import monteCalro.Utility;
+import object.DataConstellation;
 import object.InitSetting;
 import object.ObjectPool;
 import object.WeightData;
@@ -49,8 +50,8 @@ public class MonteCalro {
 	 *            MyData
 	 */
 	public static Meld MonteCalroPlay(BotSkeleton bs, MyData md, FieldData fd,
-			MakeHand mh, WeightData wd, GameFieldTree gft) {
-		return new MonteCalro().play(bs, md, fd, mh, wd, gft);
+			MakeHand mh,GameFieldTree gft, DataConstellation dc) {
+		return new MonteCalro().play(bs, md, fd, mh, gft,dc);
 	}
 
 	/**
@@ -62,7 +63,7 @@ public class MonteCalro {
 	 *            MyData
 	 */
 	private Meld play(BotSkeleton bs, MyData md, FieldData fd, MakeHand mh,
-			WeightData wd, GameFieldTree gft) {
+			GameFieldTree gft,DataConstellation dc) {
 
 		ArrayList<MeldData> arrayListMelds = searchOfMeld(bs);// 出せる役を探索
 
@@ -97,7 +98,7 @@ public class MonteCalro {
 			cards[i] = number;
 		}
 
-		gft.firstInitChildren(gft.getParent(), cards, wd);// 子供の作成
+		gft.firstInitChildren(gft.getParent(), cards, dc.getWd());// 子供の作成
 
 		int putRandom = 0; // 最初に出す手をランダムに選ぶ
 
@@ -135,7 +136,7 @@ public class MonteCalro {
 
 				if (playGF.getHaveChildNumber() == 0) {// 子供を持っていないとき
 
-					playGF.useSimulationBarancing(InitSetting.LEARNING, wd);
+					playGF.useSimulationBarancing(InitSetting.LEARNING, dc);
 
 				} else {
 					putRandom = gft.getUCBPos(playGF.getHaveChildNumber());
@@ -144,6 +145,8 @@ public class MonteCalro {
 
 					playGF = gft.returnGameFeild(playGF.getHaveChildNumber(), putRandom).clone();
 
+					if(playGF.checkGoalPlayer())
+						break;
 					growUpChildren = playGF.doGrowUpTree(); // 木が成長できるかどうかの探索
 
 					continue;
@@ -164,14 +167,14 @@ public class MonteCalro {
 			learning = learning * 0.99;
 
 			if (growUpChildren) {
-				gft.initChildren(gft.parent, wd);
+				gft.initChildren(meldDataOrder, dc.getWd());
 				growUpChildren = false;
 			}
 		}
 		int resultPos = gft.returnPutPos();
 		// TODO 棋譜データの更新
 		if (InitSetting.GAMERECORD)
-			 parentGF.writeText(0); // 棋譜データ作成
+			parentGF.writeText(gft.childrenGameFeild.get(1).get(resultPos).getWinPoint()); // 棋譜データ作成
 
 		gft.realseAllGameFeild();// 全てのゲーム
 		ObjectPool.releaseArrayInt(meldDataOrder);

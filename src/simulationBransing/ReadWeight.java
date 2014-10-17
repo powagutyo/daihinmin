@@ -52,11 +52,8 @@ public class ReadWeight extends Thread {
 						}
 						splitWeight = message.split(",");
 						visit = Double.parseDouble(splitWeight[1]);
-						if(splitWeight[0].equals("05530")){
-							System.out.println();
-						}
 						for (int j = 0; j < InitSetting.WEIGHTNUMBER; j++) {
-							weight[j] = Double.parseDouble(splitWeight[j + 2]) / visit;				
+							weight[j] = Double.parseDouble(splitWeight[j + 2]) / visit;
 						}
 						wd.setWeight(i, Integer.parseInt(splitWeight[0])
 								, weight.clone());

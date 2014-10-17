@@ -56,6 +56,10 @@ public class FieldData {
 		}
 		initPlayerInformation();
 
+		for (int i = 0; i < players; i++) {
+			wonPlayer[i] = false;
+
+		}
 		millionaire = -1;
 
 		for (int i = 0; i < 2; i++) {
@@ -69,7 +73,7 @@ public class FieldData {
 	public void initPlayerInformation() {
 		for (int i = 0; i < players; i++) {
 			passPlayer[i] = false;
-			wonPlayer[i] = false;
+
 		}
 	}
 
