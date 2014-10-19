@@ -56,7 +56,7 @@ public class ObjectPool {
 		if(size == 0){
 			return new ArrayList<Integer>(64);
 		}else{
-			return arrayInt.get(size-1);
+			return arrayInt.remove(size-1);
 		}
 	}
 	public static void releaseArrayInt(ArrayList<Integer> array){
@@ -72,7 +72,7 @@ public class ObjectPool {
 		if(size == 0){
 			return new double[256];
 		}else{
-			return arrayDouble.get(size-1);
+			return arrayDouble.remove(size-1);
 		}
 	}
 	public static void releaseArrayDouble(double[] array){
@@ -147,11 +147,11 @@ public class ObjectPool {
 	}
 	public static ArrayList<Long> getPutHand(){
 		if( putHand == null){
-			putHand = new ArrayList<ArrayList<Long>>(8);
+			putHand = new ArrayList<ArrayList<Long>>();
 		}
 		int arraySize = putHand.size();
 		if(arraySize == 0){
-			return new ArrayList<Long>(64);
+			return new ArrayList<Long>();
 		}else{
 			return putHand.remove(arraySize-1);
 		}

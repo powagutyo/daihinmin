@@ -1,5 +1,6 @@
 package simulationBransing;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -195,13 +196,13 @@ public class WeightData_S {
 	public void writeText() {
 		int size = textNames.length;
 		StringBuffer sb;
-		File file;
-		FileWriter fw= null;
+		File file;FileWriter fw= null;
+		BufferedWriter bw= null;
 		HashMap<Integer, double[]> map;
 		for (int i = 0; i < size; i++) {
 			file = new File(textNames[i]);
 			try {
-				fw = new FileWriter(file);
+				bw = new BufferedWriter(new FileWriter(file)) ;
 				map = returnMap(i + 1);
 				for(int num: map.keySet()){
 					sb = new StringBuffer();
@@ -210,14 +211,15 @@ public class WeightData_S {
 						sb.append(",");
 						sb.append(d);
 					}
-					fw.write(sb.toString());
+					bw.write(sb.toString());
+					bw.newLine();
 				}
 			} catch (IOException e) {
 				// TODO 自動生成された catch ブロック
 				e.printStackTrace();
 			}finally{
 				try {
-					fw.close();
+					bw.close();
 				} catch (IOException e) {
 					// TODO 自動生成された catch ブロック
 					e.printStackTrace();

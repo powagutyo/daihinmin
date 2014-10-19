@@ -45,10 +45,9 @@ public class Caluculater {
 		return result;
 	}
 
-	public static double[] scailingPai_sita(double[] pai_sita) {
+	public static double[] scailingPai_sita(double[] pai_sita, int size) {
 		double max = -1024;
 		double min = 1024;
-		int size = pai_sita.length;
 		for (int i = 0; i < size; i++) {
 			if (max < pai_sita[i])
 				max = pai_sita[i];

@@ -77,6 +77,8 @@ public class GameField implements Cloneable {
 
 	/** 座席のランク 25bit 今は使ってない **/
 	private int grade;
+
+
 	/*** 見えていないカード　long 53bit **/
 	private long notLookCards;
 
@@ -156,7 +158,6 @@ public class GameField implements Cloneable {
 			grade = grade | 1 << (counter * 5 + num - 1);
 			counter++;
 		}
-
 		mySeat = md.getSeat();
 
 		turnPlayer = mySeat;
@@ -416,6 +417,15 @@ public class GameField implements Cloneable {
 		switch (num) {
 		case 0:
 			state = State.RENEW;
+			if (!reverse) {
+				rank = 0;
+			} else {
+				rank = 14;
+			}
+
+			lockNumber = 0;
+			placeSuits = 0;
+			numberOfCardSize = 0;
 			break;
 		case 1:
 			state = State.SINGLE;
@@ -427,7 +437,7 @@ public class GameField implements Cloneable {
 			state = State.SEQUENCE;
 			break;
 		default:
-			state = state.RENEW;
+			state = State.RENEW;
 			break;
 		}
 		counter++;
@@ -453,12 +463,14 @@ public class GameField implements Cloneable {
 			counter++;
 		}
 		wonPlayer = firstWonPlayer;
+		passPlayer = passPlayer | wonPlayer;
 		// points
 		for (int i = 0; i < 6; i++) {
 			num = Character.getNumericValue(data[counter]);
-			point = num / Math.pow(10, i);
+			point += num / Math.pow(10, i);
 			counter++;
 		}
+
 		return point;
 	}
 
@@ -477,6 +489,7 @@ public class GameField implements Cloneable {
 		int counter = 0;
 		// 場のマークを取り出す
 		counter = 0;
+		placeSuits = 0;
 		for (boolean flag : Utility.meldParseSuitsOfBoolean(lastMeld)) {
 			if (flag) {
 				placeSuits = placeSuits | (1 << counter);
@@ -772,6 +785,7 @@ public class GameField implements Cloneable {
 		}
 		if (state == State.RENEW) {// Renewの時の更新部
 			state = getState(putHand, numberOfCardSize, rank);
+
 			boolean joker = false;
 			long oneKindOfCard = 0;
 			for (int i = 0; i < 13; i++) {
@@ -1313,8 +1327,6 @@ public class GameField implements Cloneable {
 				list = returnAllResult_renewMeld(list);// renew時に出す役を受ける
 				break;
 			default:
-				list.add((long) 0); // PASS
-
 				System.out
 						.println("エラー発生　MonteCalro.java putToSeeStateOfFieldメソッド　：");
 				break;
@@ -1356,29 +1368,36 @@ public class GameField implements Cloneable {
 	 */
 	public void useSimulationBarancing(boolean leraning, DataConstellation dc) {
 		ArrayList<Long> list = getPutHand(); // 複数の候補手を探す
-		if (list.get(0) == 0) {
-			passPlayer = passPlayer | (1 << turnPlayer);
 
-		} else {// PASS以外の時
-			if (leraning) {// 学習フェーズを使用する時
-				ObjectPool.sb.learningPhase(this, dc.getGrd()); // 学習フェーズ
-				// sb.displaySita(); //Θを学習させたものを表示する
+		try {
+			if(((1 << turnPlayer) & passPlayer) == 0){
+				if (list.get(0) == 0) {
+					passPlayer = passPlayer | (1 << turnPlayer);
+
+				} else {// PASS以外の時
+					if (leraning) {// 学習フェーズを使用する時
+						ObjectPool.sb.learningPhase(this, dc.getGrd()); // 学習フェーズ
+						// sb.displaySita(); //Θを学習させたものを表示する
+					}
+					int pos = 0;
+					switch (InitSetting.putHandMode) {
+					case 0:
+						pos = randomPutHand(list.size());
+						break;
+					case 1:
+						pos = ObjectPool.sb.putHand(list, this);// シミュレーションバランシングで手を決定する
+						break;
+					case 2:
+						pos = ObjectPool.sb.putHand_simulataion(list, this, dc.getWd());// シミュレーションバランシングで手を決定する
+						break;
+					default:
+						break;
+					}
+					updatePlace(list.get(pos));
+				}
 			}
-			int pos = 0;
-			switch (InitSetting.putHandMode) {
-			case 0:
-				pos = randomPutHand(list.size());
-				break;
-			case 1:
-				pos = ObjectPool.sb.putHand(list, this);// シミュレーションバランシングで手を決定する
-				break;
-			case 2:
-				pos = ObjectPool.sb.putHand_simulataion(list, this, dc.getWd());// シミュレーションバランシングで手を決定する
-				break;
-			default:
-				break;
-			}
-			updatePlace(list.get(pos));
+		} catch (Exception e) {
+			System.out.println();
 		}
 		ObjectPool.releasePutHand(list);
 
@@ -1581,7 +1600,7 @@ public class GameField implements Cloneable {
 		}
 		/*** firstWonPlayerの処理 **/
 		for (int i = 0; i < PLAYERS; i++) {
-			if ((wonPlayer & (1 << i) ) != 0) {
+			if ((wonPlayer & (1 << i)) != 0) {
 				charMes[counter] = '1';
 			} else {
 				charMes[counter] = '0';
@@ -2238,8 +2257,12 @@ public class GameField implements Cloneable {
 	public void setWonPlayer(int wonPlayer) {
 		this.wonPlayer = wonPlayer;
 	}
+
 	public void setFirstWonPlayer(int firstWonPlayer) {
 		this.firstWonPlayer = firstWonPlayer;
+	}
+	public int getGrade() {
+		return grade;
 	}
 
 	public void setGrade(int grade) {

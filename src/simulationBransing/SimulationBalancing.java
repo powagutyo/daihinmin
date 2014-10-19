@@ -25,7 +25,7 @@ public class SimulationBalancing {
 	private double[] weight_sita = new double[weightNumber];
 
 	/** 棋譜の読み込みデータの数 ***/
-	private static final int GAMERECORDDATA = 100;
+	private static final int GAMERECORDDATA = 50;
 	/** 学習の回数 **/
 	private static final int LEARNINGNUMBER = 100;
 	/** 平均勾配の算出計算回数 **/
@@ -76,12 +76,13 @@ public class SimulationBalancing {
 			if (c != null) {
 				miniMax = gf.restoreGameRecord(c);
 
-				expectedReward = calcExpectedReward(gf, gf.clone()); // 期待報酬を求め
+				expectedReward = calcExpectedReward(gf.clone(), gf); // 期待報酬を求め
 
-				meanGradient = calcMeanGradient(gf, gf.clone()); // 平均勾配を計算
+				meanGradient = calcMeanGradient(gf.clone(), gf); // 平均勾配を計算
 
 				update_sita(miniMax, expectedReward, meanGradient);
-				System.out.println(counter);
+				//System.out.println(counter);
+				ObjectPool.releaseArrayDouble(meanGradient);
 				counter++;
 			}
 		}
@@ -90,11 +91,21 @@ public class SimulationBalancing {
 			for(int i = 1 ;i<=InitSetting.WEIGHTNUMBER;i++){
 				wd_weight[i] = weight_sita[i -1];
 			}
-			if(nowGF.isReverse()){
-				myGrade += 5;
+			int pos = 31 << (5 * nowGF.getTurnPlayer());
+			int grade  = nowGF.getGrade() & pos;
+			grade = grade >> nowGF.getTurnPlayer() * 5;
+			for(int i= 0;i<5;i++){
+				if((grade & (1<<i) ) != 0){
+					pos = i;
+					break;
+				}
 			}
-			wd.setWeight(myGrade-1, code, wd_weight);
-			if(visitCounter % 100 ==0){
+			if(nowGF.isReverse()){
+				pos += 5;
+			}
+			System.out.println("vist" + visitCounter);
+			wd.setWeight(pos, code, wd_weight);
+			if(visitCounter % 10 ==0){
 				wd.writeText();
 			}
 		}
@@ -114,7 +125,9 @@ public class SimulationBalancing {
 		int counter = 0;
 		while (counter <= LEARNINGNUMBER) {
 			gf = nowGF.clone();// gfを最初の状態に戻す
-
+			if (gf.checkGoalPlayer()) { // 上がった人の判定
+				break;// 自分上がった時
+			}
 			while (true) {
 				gf.useSimulationBarancing(false, null); // 場の状態を確認し、出した手を場に反映させる
 
@@ -138,14 +151,21 @@ public class SimulationBalancing {
 	 */
 	public double[] calcMeanGradient(GameField gf, GameField nowGF) {
 		int counter = 0;
-		double[] meanGradient = new double[weightNumber];
+		double[] meanGradient = ObjectPool.getArrayDouble();
 
-		double[] result =  new double[weightNumber];
+		double[] result = ObjectPool.getArrayDouble();
+		for(int i= 0;i<weightNumber;i++){
+			meanGradient[i] = 0;
+			result[i]= 0;
+		}
 
 		double visit = 1;
 
 		while (counter <= MEANGRADIENTNUMBER) {
 			gf = nowGF.clone();
+			if (gf.checkGoalPlayer()) { // 上がった人の判定
+				break;// 自分上がった時
+			}
 			visit = 0;
 			while (true) {
 				visit += gf.useSimulationBarancing_m(result, 0); // 場の状態を確認し、出した手を場に反映させる
@@ -161,7 +181,7 @@ public class SimulationBalancing {
 				result[i] = 0;
 			}
 		}
-
+		ObjectPool.releaseArrayDouble(result);
 		return meanGradient;
 
 	}
@@ -194,29 +214,27 @@ public class SimulationBalancing {
 	 */
 	public int putHand(ArrayList<Long> list, GameField gf) {
 		int size = list.size();
-		double[] points = new double[size];
+		double[] points =ObjectPool.getArrayDouble();
 		double result = 0;
 		double sum = 0;
 		boolean first = true;
+		boolean flag = true;
+
 		for (int i = 0; i < size; i++) {// 一手一手の特徴を求める
 			weight = gf.getWeight(weight, list.get(i), first);
 			result = Caluculater.calcPai_sita(this.weight_sita, weight); // 全てに対するπΘを計算
 			points[i] = result;
+			if(result != 0 && flag)
+				flag =false;
 			first = false;
 		}
-		boolean flag = true;
-		for (int i = 0; i < size; i++) {
-			if (points[i] != 0) {
-				flag = false;
-				break;
-			}
-		}
+
 		if (flag) {
 			for (int i = 0; i < size; i++) {
 				points[i] = 1;
 			}
 		} else {
-			points = Caluculater.scailingPai_sita(points);
+			points = Caluculater.scailingPai_sita(points, size);
 		}
 
 		for (int i = 0; i < size; i++) {
@@ -241,6 +259,7 @@ public class SimulationBalancing {
 				break;
 			}
 		}
+		ObjectPool.releaseArrayDouble(points);
 		return pos;
 	}
 
@@ -255,8 +274,11 @@ public class SimulationBalancing {
 	 */
 	public int putHand_m(ArrayList<Long> map, GameField gf, double[] meanGradient) {
 		int size = map.size();
-		double[] result = new double[weightNumber];
-		double[] points = new double[size];
+		double[] result =ObjectPool.getArrayDouble();
+		for(int i = 0;i<weightNumber;i++){
+			result[i] = 0;
+		}
+		double[] points = ObjectPool.getArrayDouble();
 		double pai_Sita = 0;
 		double sum = 0;
 		double num = 0;
@@ -269,7 +291,7 @@ public class SimulationBalancing {
 			pai_Sita = Caluculater.calcPai_sita(this.weight_sita, weight); // 全てに対するπΘを計算
 			points[i] = pai_Sita;
 			first = false;
-			if (pai_Sita != 0) {
+			if (pai_Sita != 0 && flag) {
 				flag = false;
 			}
 		}
@@ -280,7 +302,7 @@ public class SimulationBalancing {
 				num += points[i];
 			}
 		} else {
-			points = Caluculater.scailingPai_sita(points);
+			points = Caluculater.scailingPai_sita(points,size);
 			for (int i = 0; i < size; i++) {
 				num += points[i];
 			}
@@ -311,6 +333,9 @@ public class SimulationBalancing {
 			meanGradient[j] += weight[j] - result[j]; // (s,a)における特徴ベクトル
 		}
 
+		ObjectPool.releaseArrayDouble(result);
+		ObjectPool.releaseArrayDouble(points);
+
 		return pos;
 	}
 
@@ -326,7 +351,7 @@ public class SimulationBalancing {
 	public int putHand_simulataion(ArrayList<Long> map, GameField gf, WeightData wd) {
 		int size = map.size();
 
-		double[] points = new double[size];
+		double[] points = ObjectPool.getArrayDouble();
 		double[] sita = ObjectPool.getArrayDouble(); // 重みの特徴ベクトル
 		double pai_Sita = 0;
 		double sum = 0;
@@ -343,15 +368,13 @@ public class SimulationBalancing {
 			sita = wd.getWeight(grade, reverse, authenticationCode);// 特徴ベクトルの計算
 			pai_Sita = Caluculater.calcPai_sita(sita, weight); // 全てに対するπΘを計算
 			points[i] = pai_Sita;
+			if(pai_Sita != 0 && flag){
+				flag =false;
+			}
 			first = false;
 		}
 
-		for (int i = 0; i < size; i++) { // ここで重みベクトルが存在しない場合はランダムの判定を行う
-			if (points[i] != 0 || Double.isNaN(points[i])) {
-				flag = false;
-				break;
-			}
-		}
+
 		if (flag) {
 			for (int i = 0; i < size; i++) {
 				points[i] = 1;
@@ -369,6 +392,7 @@ public class SimulationBalancing {
 				break;
 			}
 		}
+		ObjectPool.releaseArrayDouble(points);
 		ObjectPool.releaseArrayDouble(sita);
 		return pos;
 	}
