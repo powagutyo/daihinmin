@@ -25,11 +25,11 @@ public class SimulationBalancing {
 	private double[] weight_sita = new double[weightNumber];
 
 	/** 棋譜の読み込みデータの数 ***/
-	private static final int GAMERECORDDATA = 50;
+	private static final int GAMERECORDDATA = 100;
 	/** 学習の回数 **/
-	private static final int LEARNINGNUMBER = 100;
+	private static final int LEARNINGNUMBER = 150;
 	/** 平均勾配の算出計算回数 **/
-	private static final int MEANGRADIENTNUMBER = 100;
+	private static final int MEANGRADIENTNUMBER = 150;
 	/** 学習率 **/
 	private static final double ARUFA = 1.0;
 
@@ -105,7 +105,7 @@ public class SimulationBalancing {
 			}
 			System.out.println("vist" + visitCounter);
 			wd.setWeight(pos, code, wd_weight);
-			if(visitCounter % 10 ==0){
+			if(visitCounter % 100 ==0){
 				wd.writeText();
 			}
 		}
@@ -221,7 +221,7 @@ public class SimulationBalancing {
 		boolean flag = true;
 
 		for (int i = 0; i < size; i++) {// 一手一手の特徴を求める
-			weight = gf.getWeight(weight, list.get(i), first);
+			weight = gf.getWeight(weight, list.get(i));
 			result = Caluculater.calcPai_sita(this.weight_sita, weight); // 全てに対するπΘを計算
 			points[i] = result;
 			if(result != 0 && flag)
@@ -287,7 +287,7 @@ public class SimulationBalancing {
 		boolean first = true;// 重みの計算が最初の処理かどうか計算
 
 		for (int i = 0; i < size; i++) {// 一手一手の特徴を求める
-			weight = gf.getWeight(weight, map.get(i), first);
+			weight = gf.getWeight(weight, map.get(i));
 			pai_Sita = Caluculater.calcPai_sita(this.weight_sita, weight); // 全てに対するπΘを計算
 			points[i] = pai_Sita;
 			first = false;
@@ -324,11 +324,11 @@ public class SimulationBalancing {
 		// 平均勾配を求める
 		for (int j = 0; j < weightNumber; j++) {// 重みの特徴ベクトル
 			for (int i = 0; i < size; i++) {// 手を出せる数
-				weight = gf.getWeight(weight, map.get(i), first);
+				weight = gf.getWeight(weight, map.get(i));
 
 				result[j] -= points[i] * weight[j];
 			}
-			weight = gf.getWeight(weight, map.get(pos), first);// 自分の手の特徴ベクトルを求める
+			weight = gf.getWeight(weight, map.get(pos));// 自分の手の特徴ベクトルを求める
 
 			meanGradient[j] += weight[j] - result[j]; // (s,a)における特徴ベクトル
 		}
@@ -355,7 +355,6 @@ public class SimulationBalancing {
 		double[] sita = ObjectPool.getArrayDouble(); // 重みの特徴ベクトル
 		double pai_Sita = 0;
 		double sum = 0;
-		boolean first = true; // 重みの最初の計算かどうかの判定
 		boolean flag = true; // 全ての重みが何も入っていない時の処理用変数
 
 		int pos = 0;
@@ -364,14 +363,13 @@ public class SimulationBalancing {
 		int authenticationCode = gf.getAuthenticationCode_i();
 
 		for (int i = 0; i < size; i++) {// 一手一手の特徴を求める
-			weight = gf.getWeight(weight, map.get(i), first);// 重みの計算
+			weight = gf.getWeight(weight, map.get(i));// 重みの計算
 			sita = wd.getWeight(grade, reverse, authenticationCode);// 特徴ベクトルの計算
 			pai_Sita = Caluculater.calcPai_sita(sita, weight); // 全てに対するπΘを計算
 			points[i] = pai_Sita;
 			if(pai_Sita != 0 && flag){
 				flag =false;
 			}
-			first = false;
 		}
 
 
@@ -380,7 +378,6 @@ public class SimulationBalancing {
 				points[i] = 1;
 			}
 		}
-
 		for (int i = 0; i < size; i++) {
 			sum += points[i];
 		}

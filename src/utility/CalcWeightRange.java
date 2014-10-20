@@ -37,7 +37,7 @@ public class CalcWeightRange extends Thread {
 
 		while (true) {
 
-			if (wd.isFinish()){
+			if (wd.isFinish()) {
 				try {
 					re.join();
 				} catch (InterruptedException e) {
@@ -70,44 +70,46 @@ public class CalcWeightRange extends Thread {
 				for (int myHand = 1; myHand <= 11; myHand++) {
 					for (int players = 2; players <= 5; players++) {
 						for (int allPlayersHands = 2; allPlayersHands <= 53; allPlayersHands++) {
-							message = returnMessage(myHand, players, allPlayersHands);// 認証コードの作成
-							visit = 0.0;
-							authenticationCode = 0;
-							for (int j = 0; j < InitSetting.WEIGHTNUMBER; j++) {
-								weight[j] = 0;
-							}
+							for (int mySeat = 0; mySeat < 5; mySeat++) {
+								message = "";
+								authenticationCode = myHand * 10000 + mySeat * 1000 + allPlayersHands * 10 + players;
+								System.out.println(authenticationCode);
+								message += "" +authenticationCode;
+								visit = 0.0;
+								authenticationCode = 0;
+								for (int j = 0; j < InitSetting.WEIGHTNUMBER; j++) {
+									weight[j] = 0;
+								}
 
-							for (int m = myHand - range_m; m < myHand + range_m; m++) {
-								if ((m < 1 || m > 12))
-									continue;
-
-								for (int a = allPlayersHands - range_a; a < allPlayersHands + range_a ; a++) {
-									if((a < 2 || a > 53))
+								for (int m = myHand - range_m; m < myHand + range_m; m++) {
+									if ((m < 1 || m > 12))
 										continue;
 
-									authenticationCode = m * 1000 + players * 100 + a;
-									System.out.println(authenticationCode);
+									for (int a = allPlayersHands - range_a; a < allPlayersHands + range_a; a++) {
+										if ((a < 2 || a > 53))
+											continue;
+										authenticationCode = m * 10000 + mySeat * 1000 + a * 10 + players;
 
-									result = wd.getWeight(i +1, false, authenticationCode);
+										result = wd.getWeight(i + 1, false, authenticationCode);
 
-									visit += 1.0;
-									for (int j = 0; j < InitSetting.WEIGHTNUMBER; j++) {
-										weight[j] += result[j];
+										visit += 1.0;
+										for (int j = 0; j < InitSetting.WEIGHTNUMBER; j++) {
+											weight[j] += result[j];
+										}
 									}
 								}
-
-							}
-							if (visit != 0) {
-								for (int j = 0; j < InitSetting.WEIGHTNUMBER; j++) {
-									weight[j] = weight[j] / visit;
-									message += "," + weight[j];
+								if (visit != 0) {
+									for (int j = 0; j < InitSetting.WEIGHTNUMBER; j++) {
+										weight[j] = weight[j] / visit;
+										message += "," + weight[j];
+									}
+									bf = new BufferedWriter(new FileWriter(f, true));
+									if (!first)
+										bf.newLine();
+									bf.write(message);
+									bf.close();
+									first = false;
 								}
-								bf = new BufferedWriter(new FileWriter(f, true));
-								if (!first)
-									bf.newLine();
-								bf.write(message);
-								bf.close();
-								first = false;
 							}
 						}
 					}

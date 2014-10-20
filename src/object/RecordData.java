@@ -31,7 +31,7 @@ public class RecordData {
 
 	public char[] getKey(int h, int g, int w, int ph) {
 		if (mygrade == g && myHands == h&& wonPlayer == w) {
-			if(Math.abs(ph -allPLayerHands ) <= 10){
+			if(Math.abs(ph -allPLayerHands ) <= InitSetting.RANGE＿ALLHANDS){
 				return records.clone();
 			}
 			return null;

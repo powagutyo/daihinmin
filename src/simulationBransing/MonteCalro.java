@@ -18,7 +18,6 @@ import monteCalro.Utility;
 import object.DataConstellation;
 import object.InitSetting;
 import object.ObjectPool;
-import object.WeightData;
 
 /***
  * 0 スペード 1.ハート 2.ダイヤ 3.クラブ
@@ -50,8 +49,8 @@ public class MonteCalro {
 	 *            MyData
 	 */
 	public static Meld MonteCalroPlay(BotSkeleton bs, MyData md, FieldData fd,
-			MakeHand mh,GameFieldTree gft, DataConstellation dc) {
-		return new MonteCalro().play(bs, md, fd, mh, gft,dc);
+			MakeHand mh, GameFieldTree gft, DataConstellation dc) {
+		return new MonteCalro().play(bs, md, fd, mh, gft, dc);
 	}
 
 	/**
@@ -63,7 +62,7 @@ public class MonteCalro {
 	 *            MyData
 	 */
 	private Meld play(BotSkeleton bs, MyData md, FieldData fd, MakeHand mh,
-			GameFieldTree gft,DataConstellation dc) {
+			GameFieldTree gft, DataConstellation dc) {
 
 		ArrayList<MeldData> arrayListMelds = searchOfMeld(bs);// 出せる役を探索
 
@@ -139,13 +138,13 @@ public class MonteCalro {
 					playGF.useSimulationBarancing(InitSetting.LEARNING, dc);
 
 				} else {
-					putRandom = gft.getUCBPos(playGF.getHaveChildNumber());
+					putRandom = gft.getUCBPos(playGF.getHaveChildNumber(), playGF, dc.getWd(), learning);
 
 					meldDataOrder.add(putRandom);// 木の通った順番を記憶する
 
 					playGF = gft.returnGameFeild(playGF.getHaveChildNumber(), putRandom).clone();
 
-					if(playGF.checkGoalPlayer())
+					if (playGF.checkGoalPlayer())
 						break;
 					growUpChildren = playGF.doGrowUpTree(); // 木が成長できるかどうかの探索
 
@@ -170,9 +169,10 @@ public class MonteCalro {
 				gft.initChildren(meldDataOrder, dc.getWd());
 				growUpChildren = false;
 			}
+
 		}
 		int resultPos = gft.returnPutPos();
-		// TODO 棋譜データの更新
+
 		if (InitSetting.GAMERECORD)
 			parentGF.writeText(gft.childrenGameFeild.get(1).get(resultPos).getWinPoint()); // 棋譜データ作成
 
@@ -181,106 +181,6 @@ public class MonteCalro {
 
 		return arrayListMelds.get(resultPos).getMeld();
 
-	}
-
-	/**
-	 * 一回のゲームが終わるごとに呼び出されるメソッド
-	 *
-	 * @param arrayListMelds
-	 *            すべての手のMeldData
-	 * @param cloneData
-	 *            コピーするためのMeldData
-	 * @param playout
-	 *            プレイアウトの回数
-	 * @parm cloneGameField 実際の場のGameField
-	 *
-	 * @parm order MeldDataを出した順番を保存
-	 *
-	 */
-	public void oneGameUpdate(ArrayList<MeldData> arrayListMelds, int playout,
-			GameField cloneGF, ArrayList<Integer> order) {
-
-		int point = cloneGF.returnWinPoint();
-		// 得点の計算等々
-		arrayListMelds.get(order.get(0)).updateData(point); // 自身のデータを更新させる
-
-		for (MeldData md : arrayListMelds) {// すべてのMeldDataを更新する
-			// md.setUCB(Caluculater.calcUCB_TUNED(playout, md));
-		}
-		arrayListMelds.get(order.get(0)).updateData(point, order);// 子ノードのデータを更新
-	}
-
-	/***
-	 * UCBの計算データから
-	 *
-	 * @param array
-	 * @return
-	 */
-	private int getUCBRandomMeldData(ArrayList<MeldData> array, GameField gf,
-			WeightData wd) {
-		int size = array.size();
-		if (size == 1)
-			return 0;
-
-		double result = 0.0;
-		int pos = 0;
-		double[] points = new double[size];
-		MeldData md = null;
-		boolean reverse = gf.isReverse(); // 革命か否か
-
-		if (InitSetting.putHandMode == 2) {// 重みを使う時
-			boolean doWeight = false; // 重みの計算を行うかどうかの判定用
-			boolean first = true; // 重みの計算が最初かどうかの計算
-
-			int grade = 0;
-			int authenticationCode = 0;
-
-			double[] pai_sita = new double[size];
-			int[] weight = new int[InitSetting.WEIGHTNUMBER];
-			double[] sita;// 重みの特徴
-			grade = gf.getMyGrade();// 自分のランク
-			authenticationCode = gf.getAuthenticationCode_i();// 認証コード
-
-			for (int i = 0; i < size; i++) {// すべての評価値を足し合わせる
-				md = array.get(i);
-				points[i] += md.getUCB();
-				sita = wd.getWeight(grade, reverse, authenticationCode);// sitaの読み込み
-				weight = gf.getWeight(weight, md.getCards(), first); // 重みの計算
-				pai_sita[i] = Caluculater.calcPai_sita(sita, weight);// pai_Sitaの計算
-				first = false;
-				if (!doWeight && pai_sita[i] != 0)
-					doWeight = true;
-			}
-
-			if (doWeight) {// 重みが存在する時
-				Caluculater.ratioAB(points, pai_sita, learning);// UCBの値と相互対応
-				for (int i = 0; i < size; i++) {// すべての評価値を足し合わせる
-					points[i] += (pai_sita[i]);
-				}
-			}
-			for (int i = 0; i < size; i++) {// すべての評価値を足し合わせる
-				result += points[i];
-			}
-
-		} else {
-			for (int i = 0; i < size; i++) {// すべての評価値を足し合わせる
-				md = array.get(i);
-				points[i] += md.getUCB();
-				result += points[i];
-			}
-		}
-
-		result = result * Math.random();
-
-		for (int i = 0; i < size; i++) {
-			result = result - points[i];
-			if (result <= 0) {// resultが0以下の場所を次の手
-				pos = i;
-				break;
-			}
-		}
-
-		return pos;
 	}
 
 	/**

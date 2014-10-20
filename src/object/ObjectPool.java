@@ -26,12 +26,29 @@ public class ObjectPool {
 	private static List<int[]> pair11;
 
 	private static List<ArrayList<Integer>> arrayInt;
-	private static List<double[]> arrayDouble;
+	private static List<int[]> weight;
+ 	private static List<double[]> arrayDouble;
 
 	private static List<long[]> playersHands;
 	private static List<long[]> conbine;
 
 	private static ArrayList<ArrayList<Long>> putHand;
+
+	public static int[] getWeight(){
+		if(weight == null){
+			weight = new ArrayList<int[]>(32);
+		}
+		int size = weight.size();
+		if(size == 0){
+			return new int[InitSetting.WEIGHTNUMBER];
+		}else{
+			return weight.get(size -1);
+		}
+	}
+	public static void releaseWeight(int[] array){
+		weight.add(array);
+	}
+
 
 	public static ArrayList<GameField> getGameFields(){
 		if(arrayGameFields == null)

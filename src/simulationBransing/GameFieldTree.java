@@ -3,6 +3,7 @@ package simulationBransing;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import object.InitSetting;
 import object.ObjectPool;
 import object.WeightData;
 
@@ -18,19 +19,35 @@ public class GameFieldTree {
 
 	public GameFieldTree() {
 		childrenGameFeild = new HashMap<Integer, ArrayList<GameField>>();
-		visit = new int[1024];
+		visit = new int[2048];
 		childDepth = 1;
 	}
-
-	public int getUCBPos(int childNumber) {
+	/**
+	 * UCBの値で手を決定する
+	 * @param childNumber
+	 * @param gf GameField
+	 * @param wd WeightDataクラス
+	 * @param learing 学習率
+	 * @return
+	 */
+	public int getUCBPos(int childNumber,GameField gf ,WeightData wd, double learning ) {
 		double sum = 0;
 		ArrayList<GameField> gameList = childrenGameFeild.get(childNumber);
 		int size = gameList.size();
-		// TODO ObjectPoolを活用
-		double[] points = new double[size];
-		for (int i = 0; i < size; i++) {
-			points[i] = gameList.get(i).getUCB();
-			sum += points[i];
+		double[] points = ObjectPool.getArrayDouble();
+		if(InitSetting.putHandMode == 2){
+			int[] weight = ObjectPool.getWeight();
+			for (int i = 0; i < size; i++) {
+				points[i] = gameList.get(i).getUCB();
+				//TODO weightを使えないかどうかの検討
+				sum += points[i];
+			}
+			ObjectPool.releaseWeight(weight);
+		}else{
+			for (int i = 0; i < size; i++) {
+				points[i] = gameList.get(i).getUCB();
+				sum += points[i];
+			}
 		}
 		sum = sum * Math.random();
 		int pos = 0;
@@ -41,6 +58,7 @@ public class GameFieldTree {
 				break;
 			}
 		}
+		ObjectPool.releaseArrayDouble(points);
 		return pos;
 	}
 

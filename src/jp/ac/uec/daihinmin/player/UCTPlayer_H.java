@@ -323,7 +323,7 @@ public class UCTPlayer_H extends BotSkeleton {
 		grade[number] = winCounter;// プレイヤーにランクを挿入
 
 		winCounter++;// ランク1つ下げる
-		
+
 		System.out.println(playersInformation().getSeatOfPlayer(number));
 		fieldData.setWonPlayer(playersInformation().getSeatOfPlayer(number));// 勝ったプレイヤーを記憶させてあげる
 	}

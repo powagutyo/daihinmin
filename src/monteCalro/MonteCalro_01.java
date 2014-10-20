@@ -1197,8 +1197,7 @@ public class MonteCalro_01 {
 		int arraySize = 0;
 		int seatSize = 0;
 		int random = 0;
-		// TODO 手札をそれっぽく分ける
-		// 手札を分ける
+
 		for (int i = 0; i < players; i++) {
 			if (i == mySeat) {// 自分の座席の時
 				resultHands[i] = md.getMyHand();// 自分の手をそのまま入れてあげる
