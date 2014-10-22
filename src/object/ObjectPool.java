@@ -26,6 +26,7 @@ public class ObjectPool {
 	private static List<int[]> pair11;
 
 	private static List<ArrayList<Integer>> arrayInt;
+	private static List<ArrayList<Long>> arrayLong;
 	private static List<int[]> weight;
  	private static List<double[]> arrayDouble;
 
@@ -80,6 +81,22 @@ public class ObjectPool {
 		array.clear();
 		arrayInt.add(array);
 	}
+	public static ArrayList<Long> getArrayLong(){
+		if(arrayLong == null){
+			arrayLong = new ArrayList<ArrayList<Long>>(32);
+		}
+		int size = arrayLong.size();
+		if(size == 0){
+			return new ArrayList<Long>(128);
+		}else{
+			return arrayLong.remove(size-1);
+		}
+	}
+	public static void releaseArrayLong(ArrayList<Long> array){
+		array.clear();
+		arrayLong.add(array);
+	}
+
 
 	public static double[] getArrayDouble(){
 		if(arrayDouble == null){

@@ -260,7 +260,6 @@ public class UCTPlayer_H extends BotSkeleton {
 	 */
 	private void examineWeight() {
 		if (!firstGame) {// 最初のゲームではない時
-			int size = 0;
 			int num = 0;
 			int plus = 0;
 			Melds pMelds = Melds.EMPTY_MELDS;// pairの役
@@ -439,7 +438,6 @@ public class UCTPlayer_H extends BotSkeleton {
 						.getSeatOfPlayer(number), fieldData, myData.getSeat());
 				// TODO 大富豪、大貧民などの処理
 				if (!firstGame) {
-					Cards cards = Cards.EMPTY_CARDS;
 					for (Card card : playedMeld.asCards()) {
 						playersCard.get(
 								fieldData.getGrade()[playersInformation()

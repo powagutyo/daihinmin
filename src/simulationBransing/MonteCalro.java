@@ -84,7 +84,7 @@ public class MonteCalro {
 		gft.init(parentGF);
 
 		long number = 0;
-		long[] cards = new long[arraySize];
+		ArrayList<Long> cards = ObjectPool.getArrayLong();
 		for (int i = 0; i < arraySize; i++) {
 			number = 0;
 			for (int num : arrayListMelds.get(i).getCards()) {
@@ -94,10 +94,12 @@ public class MonteCalro {
 					number = number | ((long) 1 << num);
 				}
 			}
-			cards[i] = number;
+			cards.add(number);
 		}
 
 		gft.firstInitChildren(gft.getParent(), cards, dc.getWd());// 子供の作成
+
+		ObjectPool.releaseArrayLong(cards);
 
 		int putRandom = 0; // 最初に出す手をランダムに選ぶ
 
@@ -109,13 +111,6 @@ public class MonteCalro {
 		ArrayList<Integer> meldDataOrder = ObjectPool.getArrayInt();
 
 		/** 変数の初期化終了 **/
-
-		int firstWonPlayer = parentGF.getFirstWonPlayer();
-
-		for (int i = 0; i < arraySize; i++) {// UCBの値を初期化させる
-			arrayListMelds.get(i).setTurnPlayer(mySeat); // 自分の順番にする
-			arrayListMelds.get(i).initUCB(firstWonPlayer);
-		}
 
 		// メインループ
 		for (int playout = 1; playout <= COUNT; playout++) {
@@ -144,8 +139,9 @@ public class MonteCalro {
 
 					playGF = gft.returnGameFeild(playGF.getHaveChildNumber(), putRandom).clone();
 
-					if (playGF.checkGoalPlayer())
+					if (playGF.checkGoalPlayer())//game終了木だった時
 						break;
+
 					growUpChildren = playGF.doGrowUpTree(); // 木が成長できるかどうかの探索
 
 					continue;
@@ -154,12 +150,10 @@ public class MonteCalro {
 					if (InitSetting.DEBUGMODE)
 						System.out.println("時間は"
 								+ (System.currentTimeMillis() - start) + "ms");
-
 					break;// 自分上がった時
 
 				}
 				playGF.endTurn();// ターン等々の処理
-
 			}
 			gft.upDateTree(meldDataOrder, playGF.returnWinPoint());
 

@@ -134,16 +134,16 @@ public class GameFieldTree {
 	 * @param arrayLong
 	 * @param wd
 	 */
-	public void firstInitChildren(GameField parent, long[] arrayLong,
+	public void firstInitChildren(GameField parent, ArrayList<Long> arrayLong,
 			WeightData wd) {
 
 		ArrayList<GameField> gamelist = ObjectPool.getGameFields();
-		int size = arrayLong.length;
+		int size = arrayLong.size();
 		GameField gf;
 		for (int i = 0; i < size; i++) {
 			gf = ObjectPool.getGameField();
 			gf = parent.clone();
-			gf = growUpGameField(gf, arrayLong[i], true, wd);
+			gf = growUpGameField(gf, arrayLong.get(i), true, wd);
 			gf.initChild(); // 子供の時のみ行う初期化
 			gamelist.add(gf);
 		}
@@ -193,7 +193,6 @@ public class GameFieldTree {
 		ArrayList<Long> putHand = null;
 		while (true) {
 			gf.updatePlace(num);
-
 			if (gf.checkGoalPlayer()) { // 上がった人の判定
 				gf.setCanGrowUpTree(false);// 木を成長できないように変更する
 				break;
@@ -211,7 +210,10 @@ public class GameFieldTree {
 		}
 		return gf;
 	}
-
+	/**
+	 * 最終的に出す役の場所を返すメソッド
+	 * @return
+	 */
 	public int returnPutPos() {
 		int childNumber = parent.getHaveChildNumber();
 		ArrayList<GameField> arrayGF = childrenGameFeild.get(childNumber);

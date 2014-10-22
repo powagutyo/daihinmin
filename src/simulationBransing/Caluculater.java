@@ -10,7 +10,7 @@ public class Caluculater {
 	 * @return
 	 */
 
-	public static double arufa = 1.0;
+	public static double arufa = 0.5;
 
 	/**
 	 * Bの配列をAの配列に分ける
@@ -46,8 +46,8 @@ public class Caluculater {
 	}
 
 	public static double[] scailingPai_sita(double[] pai_sita, int size) {
-		double max = -1024;
-		double min = 1024;
+		double max = -8192;
+		double min = 8192;
 		for (int i = 0; i < size; i++) {
 			if (max < pai_sita[i])
 				max = pai_sita[i];
@@ -57,6 +57,9 @@ public class Caluculater {
 		if (size == 1)
 			return pai_sita;
 		if (max == min) {
+			return pai_sita;
+		}
+		if(min > 0){
 			return pai_sita;
 		}
 		// スケーリング
