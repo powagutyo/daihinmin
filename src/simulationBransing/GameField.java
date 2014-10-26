@@ -1583,11 +1583,38 @@ public class GameField implements Cloneable {
 	public int getAuthenticationCode_i() {
 		int authenticationCode = 0;
 		int num = turnPLayerHaveHand(turnPlayer); // ターンプレイヤーの手札の枚数を取得
-		authenticationCode += num * 1000;
-		authenticationCode += allPLayersHands() * 10;
+		authenticationCode += num * 100000;
+		authenticationCode += allPLayersHands() * 1000;
+		authenticationCode += getMyHandsSquareError() * 10;
 		authenticationCode += notWonPLayers();
 		return authenticationCode;
+	}
 
+	/**
+	 * 自分の手札を平均2乗誤差を計算して、10で割ったのち、切り捨てを行うメソッド
+	 *
+	 * @return
+	 */
+	private int getMyHandsSquareError() {
+		long hand = playersHands[turnPlayer];
+		int result = 0;
+		int size = Long.bitCount(hand);
+		int s = 0;
+		long num = rank_3;
+		long x = 0;
+		for (int i = 0; i < 13; i++) {
+			x = hand & num;
+			s = Long.bitCount(x);
+			for (int j = 0; j < s; j++) {
+				result += Math.pow(i + 1, 2);
+			}
+			num = num << 1;
+		}
+		if ((hand & ONE) != 0) {
+			result += Math.pow(14, 2);
+		}
+		result = result / size;
+		return result / 10;
 	}
 
 	/**
@@ -1613,15 +1640,26 @@ public class GameField implements Cloneable {
 		for (int i = 0; i < InitSetting.WEIGHTNUMBER; i++) {
 			weight[i] = 0;
 		}
-		counter = 0;
 		// カードの特性
+		/** 3～2 joker PASS 15 ***/
 		counter = searchTypeOfCards(weight, num, counter);
+		/*** 縛りが出来るかどうか 1 ***/
 		counter = canLock(weight, num, counter);
+		/*** 革命が出来るかどうか 1 *****/
 		counter = canReverse(weight, num, counter);
-		counter = haveJoker(weight, num, counter);
+		/*** カードサイズ　1～5以上　5 ****/
 		counter = cardsSize(weight, num, counter);
-		// 場の特性 53 * 2
-		counter = weightPlaceCards(weight, num, counter);
+		/*** ペア出しが崩れたかどうかの判定 1 **/
+		counter = breakThePair(weight, num, counter);
+		/** 階段出しが崩れたどうかの判定 1 ***/
+		counter = breakTheSequence(weight, num, counter);
+		/*** そのカードが自分の中で最強のカードかどうか 1 ***/
+		counter = isStrongCard(weight, num, counter);
+		/** そのカードが自分の中で最弱のカードが含むかどうか 1 ***/
+		counter = isWeekCard(weight, num, counter);
+		/*** 自分の手札の重み 53 ***/
+		counter = weightMyHands(weight, num, counter);
+
 		return weight;
 	}
 
@@ -1721,8 +1759,10 @@ public class GameField implements Cloneable {
 		counter++;
 		return counter;
 	}
+
 	/**
 	 * 自分の出した役が一番小さい役かどうか調べるメソッド
+	 *
 	 * @param weight
 	 * @param num
 	 * @param counter
@@ -1755,22 +1795,17 @@ public class GameField implements Cloneable {
 	 *            重みを入れる最初の場所
 	 * @return weight
 	 */
-	public int weightPlaceCards(int[] weight, long num, int counter) {
-		long nc = notLookCards & (~playersHands[turnPlayer]);
-		int result = counter + (53 * 2);
+	public int weightMyHands(int[] weight, long num, int counter) {
 		long bit = 0;
 		long ph = playersHands[turnPlayer] & (~num);
 		for (int i = 0; i < CARDNUM; i++) {
 			bit = (ONE << i);
-			if ((nc & bit) != 0) {
-				weight[counter] = 0;
-			}
 			if ((ph & bit) != 0) {
-				weight[counter + 53] = 1;
+				weight[counter] = 1;
 			}
 			counter++;
 		}
-		return result;
+		return counter + 53;
 	}
 
 	/**

@@ -14,16 +14,12 @@ import simulationBransing.ReadWeight;
 public class CalcWeightRange extends Thread {
 	/** テキストの名前 */
 	private final String[] textNames = {
-			"./pai_Sita/1text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/2text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/3text_" + InitSetting.WEIGHTNUMBER + ".txt",
-			"./pai_Sita/4text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/5text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/r1text_" + InitSetting.WEIGHTNUMBER + ".txt",
-			"./pai_Sita/r2text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/r3text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/r4text_" + InitSetting.WEIGHTNUMBER + ".txt",
-			"./pai_Sita/r5text_" + InitSetting.WEIGHTNUMBER + ".txt"
+			"./pai_Sita/00text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/01text_" + InitSetting.WEIGHTNUMBER + ".txt",
+			"./pai_Sita/10text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/11text_" + InitSetting.WEIGHTNUMBER + ".txt"
 	};
 	private final String[] textNames_2 = {
-			"./pai_Sita/x1text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/x2text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/x3text_" + InitSetting.WEIGHTNUMBER + ".txt",
-			"./pai_Sita/x4text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/x5text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/xr1text_" + InitSetting.WEIGHTNUMBER + ".txt",
-			"./pai_Sita/xr2text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/xr3text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/xr4text_" + InitSetting.WEIGHTNUMBER + ".txt",
-			"./pai_Sita/xr5text_" + InitSetting.WEIGHTNUMBER + ".txt"
+			"./pai_Sita/x00text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/x01text_" + InitSetting.WEIGHTNUMBER + ".txt",
+			"./pai_Sita/x10text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/x11text_" + InitSetting.WEIGHTNUMBER + ".txt"
 	};
 
 	public static void main(String[] args) {
@@ -68,47 +64,49 @@ public class CalcWeightRange extends Thread {
 				f = new File(textNames_2[i]);
 				fw = new FileWriter(f);
 				for (int myHand = 1; myHand <= 11; myHand++) {
-					for (int players = 2; players <= 5; players++) {
-						for (int allPlayersHands = 2; allPlayersHands <= 53; allPlayersHands++) {
+					for (int allPlayersHands = 2; allPlayersHands <= 53; allPlayersHands++) {
+						for (int players = 2; players <= 5; players++) {
+							for (int se = 0; se <= 17; se++) {
 
-							message = "";
-							authenticationCode = myHand * 1000 + allPlayersHands * 10 + players;
-							System.out.println(authenticationCode);
-							message += "" + authenticationCode;
-							visit = 0.0;
-							authenticationCode = 0;
-							for (int j = 0; j < InitSetting.WEIGHTNUMBER; j++) {
-								weight[j] = 0;
-							}
+								message = "";
+								authenticationCode = myHand * 100000 + allPlayersHands * 1000 + se * 10 + players;
+								System.out.println(authenticationCode);
+								message += "" + authenticationCode;
+								visit = 0.0;
+								authenticationCode = 0;
+								for (int j = 0; j < InitSetting.WEIGHTNUMBER; j++) {
+									weight[j] = 0;
+								}
 
-							for (int m = myHand - range_m; m < myHand + range_m; m++) {
-								if ((m < 1 || m > 12))
-									continue;
-
-								for (int a = allPlayersHands - range_a; a < allPlayersHands + range_a; a++) {
-									if ((a < 2 || a > 53))
+								for (int m = myHand - range_m; m < myHand + range_m; m++) {
+									if ((m < 1 || m > 12))
 										continue;
-									authenticationCode = m * 1000  + a * 10 + players;
 
-									result = wd.getWeight(i + 1, false, authenticationCode);
+									for (int a = allPlayersHands - range_a; a < allPlayersHands + range_a; a++) {
+										if ((a < 2 || a > 53))
+											continue;
+										authenticationCode = m * 100000 + a * 1000 + se * 10 + players;
 
-									visit += 1.0;
-									for (int j = 0; j < InitSetting.WEIGHTNUMBER; j++) {
-										weight[j] += result[j];
+										result = wd.getWeight(i + 1, false, authenticationCode);
+
+										visit += 1.0;
+										for (int j = 0; j < InitSetting.WEIGHTNUMBER; j++) {
+											weight[j] += result[j];
+										}
 									}
 								}
-							}
-							if (visit != 0) {
-								for (int j = 0; j < InitSetting.WEIGHTNUMBER; j++) {
-									weight[j] = weight[j] / visit;
-									message += "," + weight[j];
+								if (visit != 0) {
+									for (int j = 0; j < InitSetting.WEIGHTNUMBER; j++) {
+										weight[j] = weight[j] / visit;
+										message += "," + weight[j];
+									}
+									bf = new BufferedWriter(new FileWriter(f, true));
+									if (!first)
+										bf.newLine();
+									bf.write(message);
+									bf.close();
+									first = false;
 								}
-								bf = new BufferedWriter(new FileWriter(f, true));
-								if (!first)
-									bf.newLine();
-								bf.write(message);
-								bf.close();
-								first = false;
 							}
 						}
 					}

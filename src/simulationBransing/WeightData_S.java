@@ -20,17 +20,18 @@ public class WeightData_S {
 	private HashMap<Integer, double[]> textr3_19;
 	private HashMap<Integer, double[]> textr4_19;
 	private HashMap<Integer, double[]> textr5_19;
-	private final String[] textNames = {
-			"./pai_Sita/1text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/2text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/3text_" + InitSetting.WEIGHTNUMBER + ".txt",
-			"./pai_Sita/4text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/5text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/r1text_" + InitSetting.WEIGHTNUMBER + ".txt",
-			"./pai_Sita/r2text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/r3text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/r4text_" + InitSetting.WEIGHTNUMBER + ".txt",
-			"./pai_Sita/r5text_" + InitSetting.WEIGHTNUMBER + ".txt"
-	};
+	private final String[] textNames;
 
 	/**
 	 * コンストラクタ
 	 */
 	public WeightData_S() {
+		textNames = new String[4];
+		textNames[0] = "./pai_Sita/00text_" + InitSetting.WEIGHTNUMBER + ".txt";
+		textNames[1] = "./pai_Sita/01text_" + InitSetting.WEIGHTNUMBER + ".txt";
+		textNames[2] = "./pai_Sita/10text_" + InitSetting.WEIGHTNUMBER + ".txt";
+		textNames[3] = "./pai_Sita/11text_" + InitSetting.WEIGHTNUMBER + ".txt";
+
 		text1_19 = new HashMap<Integer, double[]>();
 		text2_19 = new HashMap<Integer, double[]>();
 		text3_19 = new HashMap<Integer, double[]>();
@@ -164,50 +165,22 @@ public class WeightData_S {
 
 	}
 
-	/**
-	 * 自分のランクと革命から認証コードを用いて重さを返すメソッド
-	 *
-	 * @param myRank
-	 *            自分のランク
-	 * @param reverse
-	 *            革命
-	 * @param authenticationCode
-	 *            認証コード
-	 * @return
-	 */
-	public double[] getWeight(int myRank, boolean reverse, int authenticationCode) {
-		/*
-		 * int allHands = authenticationCode % 100;
-		 * int players = authenticationCode / 100 % 10;
-		 * int myHands = authenticationCode / 1000;
-		 */
-		HashMap<Integer, double[]> map = null;
-		double[] result = new double[InitSetting.WEIGHTNUMBER];
-
-		if (reverse)
-			myRank += 5;
-		map = returnMap(myRank);
-		if (!map.containsKey(authenticationCode)) {
-			return result;
-		}
-		return map.get(authenticationCode);
-	}
 
 	public void writeText() {
 		int size = textNames.length;
 		StringBuffer sb;
-		File file;FileWriter fw= null;
-		BufferedWriter bw= null;
+		File file;
+		BufferedWriter bw = null;
 		HashMap<Integer, double[]> map;
 		for (int i = 0; i < size; i++) {
 			file = new File(textNames[i]);
 			try {
-				bw = new BufferedWriter(new FileWriter(file)) ;
+				bw = new BufferedWriter(new FileWriter(file));
 				map = returnMap(i + 1);
-				for(int num: map.keySet()){
+				for (int num : map.keySet()) {
 					sb = new StringBuffer();
 					sb.append(num);
-					for(double d : map.get(num)){
+					for (double d : map.get(num)) {
 						sb.append(",");
 						sb.append(d);
 					}
@@ -217,7 +190,7 @@ public class WeightData_S {
 			} catch (IOException e) {
 				// TODO 自動生成された catch ブロック
 				e.printStackTrace();
-			}finally{
+			} finally {
 				try {
 					bw.close();
 				} catch (IOException e) {

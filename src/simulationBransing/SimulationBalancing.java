@@ -3,6 +3,7 @@ package simulationBransing;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import monteCalro.State;
 import object.GameRecordData;
 import object.InitSetting;
 import object.ObjectPool;
@@ -51,7 +52,9 @@ public class SimulationBalancing {
 	 * @throws IOException
 	 */
 	public void learningPhase(GameField nowGF, GameRecordData grd) {
-		GameField gf = nowGF.clone();
+		GameField gf = ObjectPool.getGameField();
+		gf = nowGF.clone();
+
 		int counter = 0;
 		// 方策パラメータΘの初期化
 		for (int i = 0; i < weightNumber; i++) {
@@ -68,6 +71,7 @@ public class SimulationBalancing {
 		double expectedReward = 0.0;// 期待報酬
 		double[] meanGradient = null; // 平均勾配
 		visitCounter++;
+		wd_weight[0] = 1.0;
 		/*** 棋譜データの読み込みとゲームを行う ***/
 		for (int i = 0; i < size; i++) {
 			if (counter >= GAMERECORDDATA) {
@@ -85,31 +89,29 @@ public class SimulationBalancing {
 				// System.out.println(counter);
 				ObjectPool.releaseArrayDouble(meanGradient);
 				counter++;
+
+
+
 			}
 		}
 		if (InitSetting.LEARNING) {
-			wd_weight[0] = 1.0;
-			for (int i = 1; i <= InitSetting.WEIGHTNUMBER; i++) {
-				wd_weight[i] = weight_sita[i - 1];
-			}
-			int pos = 31 << (5 * nowGF.getTurnPlayer());
-			int grade = nowGF.getGrade() & pos;
-			grade = grade >> nowGF.getTurnPlayer() * 5;
-			for (int i = 0; i < 5; i++) {
-				if ((grade & (1 << i)) != 0) {
-					pos = i;
-					break;
-				}
-			}
-			if (nowGF.isReverse()) {
-				pos += 5;
-			}
 			System.out.println("vist" + visitCounter);
+			for (int j = 1; j <= InitSetting.WEIGHTNUMBER; j++) {
+				wd_weight[j] = weight_sita[j - 1];
+			}
+			int pos = 0;
+			if (nowGF.isReverse()) {
+				pos = pos | 1;
+			}
+			if (nowGF.getState() == State.RENEW) {
+				pos = pos | 2;
+			}
 			wd.setWeight(pos, code, wd_weight.clone());
 			if (visitCounter % 100 == 0) {
 				wd.writeText();
 			}
 		}
+		ObjectPool.releaseGameField(gf);
 
 	}
 
@@ -339,7 +341,7 @@ public class SimulationBalancing {
 	public void debugWeight(long num, int[] weight, double[] paiSita, double pai_sita) {
 		System.out.println("出した役  : " + Long.toBinaryString(num) + "  全ての重みの計算結果  : " + pai_sita);
 		for (int i = 0; i < InitSetting.WEIGHTNUMBER; i++) {
-			System.out.println(i +"盤目 :   重みの特徴ベクトル : " + paiSita[i] + "  重みベクトル  : " + weight[i]);
+			System.out.println(i + "盤目 :   重みの特徴ベクトル : " + paiSita[i] + "  重みベクトル  : " + weight[i]);
 		}
 
 	}
@@ -382,7 +384,7 @@ public class SimulationBalancing {
 			for (int i = 0; i < size; i++) {
 				points[i] = 1;
 			}
-		}else{
+		} else {
 			Caluculater.scailingPai_sita(points, size);
 		}
 		for (int i = 0; i < size; i++) {

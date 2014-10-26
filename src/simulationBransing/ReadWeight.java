@@ -14,18 +14,13 @@ public class ReadWeight extends Thread {
 	public WeightData wd;
 	/** テキストの名前 */
 	private final String[] textNames = {
-			"./pai_Sita/1text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/2text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/3text_" + InitSetting.WEIGHTNUMBER + ".txt",
-			"./pai_Sita/4text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/5text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/r1text_" + InitSetting.WEIGHTNUMBER + ".txt",
-			"./pai_Sita/r2text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/r3text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/r4text_" + InitSetting.WEIGHTNUMBER + ".txt",
-			"./pai_Sita/r5text_" + InitSetting.WEIGHTNUMBER + ".txt"
+			"./pai_Sita/00text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/01text_" + InitSetting.WEIGHTNUMBER + ".txt",
+			"./pai_Sita/10text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/11text_" + InitSetting.WEIGHTNUMBER + ".txt"
 	};
 	private final String[] textNames_2 = {
-			"./pai_Sita/x1text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/x2text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/x3text_" + InitSetting.WEIGHTNUMBER + ".txt",
-			"./pai_Sita/x4text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/x5text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/xr1text_" + InitSetting.WEIGHTNUMBER + ".txt",
-			"./pai_Sita/xr2text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/xr3text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/xr4text_" + InitSetting.WEIGHTNUMBER + ".txt",
-			"./pai_Sita/xr5text_" + InitSetting.WEIGHTNUMBER + ".txt"
+			"./pai_Sita/x00text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/x01text_" + InitSetting.WEIGHTNUMBER + ".txt",
+			"./pai_Sita/x10text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/x11text_" + InitSetting.WEIGHTNUMBER + ".txt"
 	};
-
 	public ReadWeight(WeightData wd) {// コンストラクタ
 		// TODO 自動生成されたコンストラクター・スタブ
 		this.wd = wd;

@@ -35,6 +35,7 @@ public class ObjectPool {
 
 	private static ArrayList<ArrayList<Long>> putHand;
 
+
 	public static int[] getWeight(){
 		if(weight == null){
 			weight = new ArrayList<int[]>(32);

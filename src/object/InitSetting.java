@@ -2,7 +2,7 @@ package object;
 
 public class InitSetting {
 	/*** 重みの数 ***/
-	public static final int WEIGHTNUMBER = 129;
+	public static final int WEIGHTNUMBER = 79;
 	/*** デバッグモードかどうか **/
 	public static final boolean DEBUGMODE = false;
 
