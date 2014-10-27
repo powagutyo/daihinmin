@@ -20,31 +20,31 @@ public class GameRecordData {
 		gameRecordRead();
 	}
 
-	public char[] getGameRecord(int number, int myGrade, int myHands, int wonPLayer, int allPLayerHands) {
+	public char[] getGameRecord(int number, int myGrade, int myHands, int wonPLayer,int sc ,int allPLayerHands) {
 		char[] result = null;
 		switch (myGrade) {
 		case 1:
-			result = gameRecord_1.get(number).getKey(myHands, myGrade, wonPLayer,allPLayerHands);
+			result = gameRecord_1.get(number).getKey(myHands, myGrade, wonPLayer,sc,allPLayerHands);
 			if (result != null)
 				return result;
 			break;
 		case 2:
-			result = gameRecord_2.get(number).getKey(myHands, myGrade, wonPLayer,allPLayerHands);
+			result = gameRecord_2.get(number).getKey(myHands, myGrade, wonPLayer,sc,allPLayerHands);
 			if (result != null)
 				return result;
 			break;
 		case 3:
-			result = gameRecord_3.get(number).getKey(myHands, myGrade, wonPLayer,allPLayerHands);
+			result = gameRecord_3.get(number).getKey(myHands, myGrade, wonPLayer,sc,allPLayerHands);
 			if (result != null)
 				return result;
 			break;
 		case 4:
-			result = gameRecord_4.get(number).getKey(myHands, myGrade, wonPLayer,allPLayerHands);
+			result = gameRecord_4.get(number).getKey(myHands, myGrade, wonPLayer,sc,allPLayerHands);
 			if (result != null)
 				return result;
 			break;
 		case 5:
-			result = gameRecord_5.get(number).getKey(myHands, myGrade, wonPLayer,allPLayerHands);
+			result = gameRecord_5.get(number).getKey(myHands, myGrade, wonPLayer,sc,allPLayerHands);
 			if (result != null)
 				return result;
 			break;

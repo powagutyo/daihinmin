@@ -109,6 +109,7 @@ public class GameFieldTree {
 		int arraySize = 0;
 		ArrayList<GameField> ag;
 		for (int i = 1; i <= size; i++) {
+			visit[i] = 0;
 			ag = childrenGameFeild.get(i);
 			arraySize = ag.size();
 			for (int j = 0; j < arraySize; j++) {
@@ -118,6 +119,7 @@ public class GameFieldTree {
 		}
 		parent.release();
 		ObjectPool.releaseGameField(parent);
+		parent = null;
 		childDepth = 1;
 	}
 

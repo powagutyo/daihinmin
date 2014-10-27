@@ -42,6 +42,8 @@ public class SimulationBalancing {
 	/** set用の変数 ***/
 	private double[] wd_weight = new double[InitSetting.WEIGHTNUMBER + 1];
 
+	private boolean first = true;
+
 	/**
 	 * 学習フェーズ
 	 *
@@ -64,6 +66,7 @@ public class SimulationBalancing {
 		int myGrade = nowGF.getMyGrade();
 		int code = nowGF.getAuthenticationCode_i();
 		int myHands = nowGF.turnPLayerHaveHand(nowGF.getTurnPlayer());
+		int se = nowGF.getMyHandsSquareError();
 		int allPlyerHands = nowGF.allPLayersHands();
 		int wonPLayer = nowGF.notWonPLayers();
 		int size = grd.size(myGrade);
@@ -77,27 +80,31 @@ public class SimulationBalancing {
 			if (counter >= GAMERECORDDATA) {
 				break;
 			}
-			c = grd.getGameRecord(i, myGrade, myHands, wonPLayer, allPlyerHands);
+			c = grd.getGameRecord(i, myGrade, myHands, wonPLayer, se, allPlyerHands);
 			if (c != null) {
 				miniMax = gf.restoreGameRecord(c);
 
-				expectedReward = calcExpectedReward(gf.clone(), gf); // 期待報酬を求め
+				expectedReward = calcExpectedReward(ObjectPool.getGameField(), gf); // 期待報酬を求め
 
-				meanGradient = calcMeanGradient(gf.clone(), gf); // 平均勾配を計算
+				meanGradient = calcMeanGradient(ObjectPool.getGameField(), gf); // 平均勾配を計算
 
 				update_sita(miniMax, expectedReward, meanGradient);
 				// System.out.println(counter);
 				ObjectPool.releaseArrayDouble(meanGradient);
 				counter++;
 
-
-
 			}
 		}
 		if (InitSetting.LEARNING) {
-			System.out.println("vist" + visitCounter);
+
+			System.out.println("visit" + visitCounter);
+			boolean flag = false;
+
 			for (int j = 1; j <= InitSetting.WEIGHTNUMBER; j++) {
 				wd_weight[j] = weight_sita[j - 1];
+				if(wd_weight[j] != 0){
+					flag = true;
+				}
 			}
 			int pos = 0;
 			if (nowGF.isReverse()) {
@@ -106,9 +113,12 @@ public class SimulationBalancing {
 			if (nowGF.getState() == State.RENEW) {
 				pos = pos | 2;
 			}
-			wd.setWeight(pos, code, wd_weight.clone());
+			if(flag){
+				wd.setWeight(pos, code, wd_weight.clone());
+			}
 			if (visitCounter % 100 == 0) {
 				wd.writeText();
+
 			}
 		}
 		ObjectPool.releaseGameField(gf);
@@ -125,6 +135,7 @@ public class SimulationBalancing {
 	 */
 	public double calcExpectedReward(GameField gf, GameField nowGF) {
 		double result = 0.0;
+		double M = LEARNINGNUMBER;
 		int counter = 0;
 		while (counter <= LEARNINGNUMBER) {
 			gf = nowGF.clone();// gfを最初の状態に戻す
@@ -140,9 +151,10 @@ public class SimulationBalancing {
 				gf.endTurn();// ターンなどの処理
 			}
 			counter++;
-			result += gf.returnWinPoint();
+			result += gf.returnWinPoint() / M;
 		}
-		return result / LEARNINGNUMBER;
+		ObjectPool.releaseGameField(gf);
+		return result;
 	}
 
 	/**
@@ -155,23 +167,20 @@ public class SimulationBalancing {
 	public double[] calcMeanGradient(GameField gf, GameField nowGF) {
 		int counter = 0;
 		double[] meanGradient = ObjectPool.getArrayDouble();
-
+		double M = MEANGRADIENTNUMBER;
 		double[] result = ObjectPool.getArrayDouble();
 		for (int i = 0; i < weightNumber; i++) {
 			meanGradient[i] = 0;
 			result[i] = 0;
 		}
-
-		double visit = 1;
-
+		double visit = 0;
 		while (counter <= MEANGRADIENTNUMBER) {
 			gf = nowGF.clone();
 			if (gf.checkGoalPlayer()) { // 上がった人の判定
 				break;// 自分上がった時
 			}
-			visit = 0;
 			while (true) {
-				visit += gf.useSimulationBarancing_m(result, 0); // 場の状態を確認し、出した手を場に反映させる
+				visit = gf.useSimulationBarancing_m(result, visit); // 場の状態を確認し、出した手を場に反映させる
 
 				if (gf.checkGoalPlayer()) { // 上がった人の判定
 					break;// 自分上がった時
@@ -180,10 +189,11 @@ public class SimulationBalancing {
 			}
 			counter++;
 			for (int i = 0; i < weightNumber; i++) {
-				meanGradient[i] += ((gf.returnWinPoint() * result[i]) / (visit * MEANGRADIENTNUMBER));
+				meanGradient[i] += ((gf.returnWinPoint() * result[i]) / (visit * M));
 				result[i] = 0;
 			}
 		}
+		ObjectPool.releaseGameField(gf);
 		ObjectPool.releaseArrayDouble(result);
 		return meanGradient;
 
@@ -230,7 +240,7 @@ public class SimulationBalancing {
 				flag = false;
 		}
 
-		if (flag) {
+		if (flag) {// 全ての重みpai_Sitaの値が0の時
 			for (int i = 0; i < size; i++) {
 				points[i] = 1;
 			}
@@ -241,7 +251,6 @@ public class SimulationBalancing {
 		for (int i = 0; i < size; i++) {
 			sum += points[i];
 		}
-
 		for (int i = 0; i < size; i++) {
 			points[i] = points[i] / sum;
 		}
@@ -294,7 +303,6 @@ public class SimulationBalancing {
 				flag = false;
 			}
 		}
-
 		if (flag) {
 			for (int i = 0; i < size; i++) {
 				points[i] = 1;
@@ -311,8 +319,8 @@ public class SimulationBalancing {
 			points[i] = points[i] / num;
 			sum += points[i];
 		}
-
 		double average = sum * Math.random(); // ランダムで変数を入れる
+
 		for (int i = 0; i < size; i++) {
 			average -= points[i];
 			if (average <= 0) {
@@ -331,10 +339,8 @@ public class SimulationBalancing {
 
 			meanGradient[j] += weight[j] - result[j]; // (s,a)における特徴ベクトル
 		}
-
 		ObjectPool.releaseArrayDouble(result);
 		ObjectPool.releaseArrayDouble(points);
-
 		return pos;
 	}
 
@@ -390,10 +396,19 @@ public class SimulationBalancing {
 		for (int i = 0; i < size; i++) {
 			sum += points[i];
 		}
-		double average = sum * Math.random(); // ランダムで変数を入れる
 		for (int i = 0; i < size; i++) {
-			average -= points[i];
-			if (average <= 0) {
+			points[i] = points[i] / sum;
+		}
+		sum = 0;
+
+		for (int i = 0; i < size; i++) {
+			sum += points[i];
+		}
+		sum = sum * Math.random(); // ランダムで変数を入れる
+
+		for (int i = 0; i < size; i++) {
+			sum -= points[i];
+			if (sum <= 0) {
 				pos = i;// サイズをposに変更
 				break;
 			}

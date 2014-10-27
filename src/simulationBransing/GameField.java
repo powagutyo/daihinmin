@@ -372,9 +372,8 @@ public class GameField implements Cloneable {
 	 */
 	public double restoreGameRecord(char[] data) {
 		double point = 0;
-		int counter = 2;
-		mySeat = Character.getNumericValue(data[counter]);
-		counter += 4;
+		mySeat = Character.getNumericValue(data[2]);
+		int counter = 8;
 		int num = 0;
 		// 全員のカードの処理
 		for (int i = 0; i < PLAYERS; i++) {
@@ -1312,7 +1311,7 @@ public class GameField implements Cloneable {
 			passPlayer = passPlayer | (1 << turnPlayer);
 		} else {// PASS以外の時
 			int pos = ObjectPool.sb.putHand_m(list, this, meanGradient);// シミュレーションバランシングで手を決定する
-			visit++;
+			visit += 1.0;
 			updatePlace(list.get(pos));
 		}
 		ObjectPool.releasePutHand(list);
@@ -1397,6 +1396,21 @@ public class GameField implements Cloneable {
 			charMes[counter] = intChangeChar(num);
 			counter++;
 		}
+
+		num = getMyHandsSquareError();
+
+		if (num >= 10) {
+			charMes[counter] = intChangeChar(num / 10);
+			counter++;
+			charMes[counter] = intChangeChar(num % 10);
+			counter++;
+		} else {
+			charMes[counter] = '0';
+			counter++;
+			charMes[counter] = intChangeChar(num);
+			counter++;
+		}
+
 		charMes[counter] = intChangeChar(5 - Integer.bitCount(wonPlayer)); // 現在いるプレイヤー
 		counter++;
 
@@ -1595,7 +1609,7 @@ public class GameField implements Cloneable {
 	 *
 	 * @return
 	 */
-	private int getMyHandsSquareError() {
+	public int getMyHandsSquareError() {
 		long hand = playersHands[turnPlayer];
 		int result = 0;
 		int size = Long.bitCount(hand);
@@ -1824,7 +1838,7 @@ public class GameField implements Cloneable {
 				size = 5;
 			}
 			size--;
-			weight[counter - size] = 1;
+			weight[counter + size] = 1;
 		}
 		counter += 5;
 		return counter;

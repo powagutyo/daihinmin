@@ -37,10 +37,9 @@ public class Caluculater {
 	}
 
 	public static double calcPai_sita(double[] sita, int[] wegiht) {
-
 		double result = 0;
 		for (int i = 0; i < InitSetting.WEIGHTNUMBER; i++) {
-			result += sita[i] * wegiht[i]; // ベクトルの内積を計算
+			result += Math.pow(Math.E, sita[i] * wegiht[i]); // ベクトルの内積を計算
 		}
 		return result;
 	}
@@ -59,7 +58,7 @@ public class Caluculater {
 		if (max == min) {
 			return pai_sita;
 		}
-		if(min > 0){
+		if (min > 0) {
 			return pai_sita;
 		}
 		// スケーリング
@@ -93,23 +92,24 @@ public class Caluculater {
 		double point = (double)gf.getWon();
 		double num = 0.0;
 		double winPro;
-		if (visit == 0) {// niが0の時は0.5とする
+		if (visit == 0) {
 			return gf.getUCB();
 		} else {
-			winPro = point / (5.0 * visit);
+			winPro = point / (5.0 * visit );
 		}
 
 		for (int i = 0; i < 5; i++) {
-			num += Math.pow((i + 1) / 5.0, 2) * gf.returnWinPoints(i+1);
+
+			num += Math.pow((i + 1) / 5.0 , 2)  * gf.returnWinPoints(i+1);
 		}
 
-		double x = num / visit;
+		double x = num / ( visit);
 
 		double y = Math.pow(winPro, 2);
 
 		double z = Math.sqrt(2.0 * Math.log(playout) / visit);
 
-		num = x - y + z;
+		num = x-y + z ;
 		if (num > 0.25) {
 			num = 0.25;
 		}
