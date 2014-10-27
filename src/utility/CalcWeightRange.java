@@ -87,7 +87,7 @@ public class CalcWeightRange extends Thread {
 											continue;
 										authenticationCode = m * 100000 + a * 1000 + se * 10 + players;
 
-										result = wd.getWeight(i + 1, false, authenticationCode);
+										result = wd.getWeight(i + 1, authenticationCode);
 
 										visit += 1.0;
 										for (int j = 0; j < InitSetting.WEIGHTNUMBER; j++) {

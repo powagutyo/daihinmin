@@ -22,28 +22,31 @@ public class GameFieldTree {
 		visit = new int[2048];
 		childDepth = 1;
 	}
+
 	/**
 	 * UCBの値で手を決定する
+	 *
 	 * @param childNumber
-	 * @param gf GameField
-	 * @param wd WeightDataクラス
-	 * @param learing 学習率
+	 * @param gf
+	 *            GameField
+	 * @param wd
+	 *            WeightDataクラス
+	 * @param learing
+	 *            学習率
 	 * @return
 	 */
-	public int getUCBPos(int childNumber,GameField gf ,WeightData wd, double learning ) {
+	public int getUCBPos(int childNumber, GameField gf, WeightData wd, double learning) {
 		double sum = 0;
 		ArrayList<GameField> gameList = childrenGameFeild.get(childNumber);
 		int size = gameList.size();
 		double[] points = ObjectPool.getArrayDouble();
-		if(InitSetting.putHandMode == 2){
-			int[] weight = ObjectPool.getWeight();
+		if (InitSetting.putHandMode == 2) {
+
 			for (int i = 0; i < size; i++) {
 				points[i] = gameList.get(i).getUCB();
-				//TODO weightを使えないかどうかの検討
 				sum += points[i];
 			}
-			ObjectPool.releaseWeight(weight);
-		}else{
+		} else {
 			for (int i = 0; i < size; i++) {
 				points[i] = gameList.get(i).getUCB();
 				sum += points[i];
@@ -113,6 +116,7 @@ public class GameFieldTree {
 			ag = childrenGameFeild.get(i);
 			arraySize = ag.size();
 			for (int j = 0; j < arraySize; j++) {
+				ag.get(0).release();
 				ObjectPool.releaseGameField(ag.remove(0));
 			}
 			ObjectPool.releaseGameFeilds(ag);
@@ -212,8 +216,10 @@ public class GameFieldTree {
 		}
 		return gf;
 	}
+
 	/**
 	 * 最終的に出す役の場所を返すメソッド
+	 *
 	 * @return
 	 */
 	public int returnPutPos() {

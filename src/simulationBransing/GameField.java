@@ -140,6 +140,18 @@ public class GameField implements Cloneable {
 		init(bs, fd);
 	}
 
+	public int returnKey() {
+		int pos = 0;
+		if (reverse) {
+			pos = pos | 1;
+		}
+		if (state == State.RENEW) {
+			pos = pos | 2;
+		}
+		pos = pos + (notWonPLayers() - 2) * 4;
+		return pos;
+	}
+
 	/**
 	 * 一番最初に行う初期化
 	 *
@@ -155,7 +167,6 @@ public class GameField implements Cloneable {
 			rank_3 = rank_3 | rank_3 << (i * 13);
 		}
 		rank_3 = rank_3 << 1;
-		playersHands = ObjectPool.getPLayersHands();
 		int counter = 0;
 		firstWonPlayer = 0;
 		for (boolean flag : fd.getWonPlayer()) {
@@ -307,6 +318,7 @@ public class GameField implements Cloneable {
 	 *            自分の手札群
 	 */
 	public void initPLaceGameFiled(int[][] copyHands) {
+		playersHands = ObjectPool.getPLayersHands();
 		long num;
 		for (int i = 0; i < PLAYERS; i++) {
 			num = 0;
@@ -1004,7 +1016,7 @@ public class GameField implements Cloneable {
 							num = num | (ONE << (j * 13 + i));
 						}
 						num = num & playerHand;
-						if (lock && Long.bitCount(num) != size)
+						if (Long.bitCount(num) != size)
 							continue;
 						list.add(num);
 					}
@@ -1018,7 +1030,7 @@ public class GameField implements Cloneable {
 							num = num | (ONE << (j * 13 + i));
 						}
 						num = num & playerHand;
-						if (lock && Long.bitCount(num) != size)
+						if (Long.bitCount(num) != size)
 							continue;
 						list.add(num);
 					} else if (turnPLayerTypeOfHandsOfCards(i, turnPlayer) >= size - 1) {
@@ -1030,7 +1042,7 @@ public class GameField implements Cloneable {
 							num = num | (ONE << (j * 13 + i));
 						}
 						num = num & playerHand;
-						if (lock && Long.bitCount(num) != size)
+						if (Long.bitCount(num) != size)
 							continue;
 						list.add(num);
 					}
@@ -1048,7 +1060,7 @@ public class GameField implements Cloneable {
 							num = num | (ONE << (j * 13 + i));
 						}
 						num = num & playerHand;
-						if (lock && Long.bitCount(num) != size)
+						if (Long.bitCount(num) != size)
 							continue;
 						list.add(num);
 					}
@@ -1062,7 +1074,7 @@ public class GameField implements Cloneable {
 							num = num | (ONE << (j * 13 + i));
 						}
 						num = num & playerHand;
-						if (lock && Long.bitCount(num) != size)
+						if (Long.bitCount(num) != size)
 							continue;
 						list.add(num);
 					} else if (turnPLayerTypeOfHandsOfCards(i, turnPlayer) >= size - 1) {
@@ -1074,7 +1086,7 @@ public class GameField implements Cloneable {
 							num = num | (ONE << (j * 13 + i));
 						}
 						num = num & playerHand;
-						if (lock && Long.bitCount(num) != size)
+						if (Long.bitCount(num) != size)
 							continue;
 						list.add(num);
 					}
@@ -1620,26 +1632,14 @@ public class GameField implements Cloneable {
 			x = hand & num;
 			s = Long.bitCount(x);
 			for (int j = 0; j < s; j++) {
-				result += Math.pow(i + 1, 2);
+				result += (i + 1) * (i + 1);
 			}
 			num = num << 1;
 		}
 		if ((hand & ONE) != 0) {
-			result += Math.pow(14, 2);
+			result += 14 * 14;
 		}
-		result = result / size;
-		return result / 10;
-	}
-
-	/**
-	 * ターンプレイヤーがjokerを持ってるかどうか
-	 *
-	 * @return
-	 */
-	public boolean turnPlayerHaveJoker() {
-		boolean result = false;
-		if ((playersHands[turnPlayer] & (ONE << 1)) == 1)
-			result = true;
+		result = result / (size * 10);
 		return result;
 	}
 
@@ -1688,23 +1688,23 @@ public class GameField implements Cloneable {
 	public int breakThePair(int[] weight, long num, int counter) {
 		if (state != State.SEQUENCE) { // 階段の時のみは省略
 			if (state == State.SINGLE && (num & ONE) != 0) {
-				weight[counter] = 1;
-				counter++;
-				return counter;
-			}
-			int size = Long.bitCount(num);
-			if ((num & ONE) != 0) {// jokerを抜く
-				size--;
-			}
-			long pair = rank_3;
-			for (int i = 0; i < 13; i++) {
-				if ((num & pair) != 0) {
-					if (size < Long.bitCount(playersHands[turnPlayer] & pair)) {
-						weight[counter] = 1;
-						break;
-					}
+				weight[counter] = 0;
+			} else {
+				int size = Long.bitCount(num);
+				long playersHand = playersHands[turnPlayer];
+				if ((num & ONE) != 0) {// jokerを抜く
+					size--;
 				}
-				pair = pair << 1;
+				long pair = rank_3;
+				for (int i = 0; i < 13; i++) {
+					if ((num & pair) != 0) {
+						if (size < Long.bitCount(playersHand & pair)) {
+							weight[counter] = 1;
+							break;
+						}
+					}
+					pair = pair << 1;
+				}
 			}
 		}
 		counter++;
@@ -1838,58 +1838,9 @@ public class GameField implements Cloneable {
 				size = 5;
 			}
 			size--;
-			weight[counter + size] = 1;
+			weight[counter] = 1;
 		}
 		counter += 5;
-		return counter;
-	}
-
-	/**
-	 * jokerを役に使ったかどうかの判定
-	 *
-	 * @param weight
-	 * @param cards
-	 * @param size
-	 * @param counter
-	 * @return
-	 */
-	public int haveJoker(int[] weight, long num, int counter) {
-		if ((num & (ONE << 0)) != 0) {
-			weight[counter] = 1;
-		}
-		counter++;
-		return counter;
-	}
-
-	/**
-	 * 場の状態のデータの重み
-	 *
-	 * @param weight
-	 * @param size
-	 * @param counter
-	 * @return
-	 */
-	public int setPlaceData_w(int[] weight, int size, int counter) {
-
-		int num = rank;
-		if (!(reverse && rank == num) || (!reverse && num == 0)) {// renewじゃない時
-			if (reverse)
-				num = 14 - num;
-			num--;
-			weight[counter + num] = 1;
-		}
-		counter += 14;
-		if (state == State.RENEW) {
-			weight[counter] = 1;
-		} else if (state == State.SINGLE) {
-			weight[counter + 1] = 1;
-		} else if (state == State.GROUP) {
-			weight[counter + 2] = 1;
-		} else {
-			weight[counter + 3] = 1;
-		}
-
-		counter += 4;
 		return counter;
 	}
 
@@ -1939,7 +1890,7 @@ public class GameField implements Cloneable {
 			// 自分のマークを調べる
 			for (int i = 0; i < 4; i++) {
 				if ((num & suit) != 0) {
-					place = (1 << i);
+					place += (1 << i);
 				}
 			}
 			// マークが一致した時の判定

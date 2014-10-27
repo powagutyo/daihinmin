@@ -94,7 +94,7 @@ public class WeightData {
 	 *            認証コード
 	 * @return
 	 */
-	public double[] getWeight(int myRank, boolean reverse, int authenticationCode) {
+	public double[] getWeight(int myRank, int authenticationCode) {
 		/*
 		int allHands = authenticationCode % 100;
 		int players = authenticationCode / 100 % 10;
@@ -103,8 +103,6 @@ public class WeightData {
 		HashMap<Integer, double[]> map = null;
 		double[] result = new double[InitSetting.WEIGHTNUMBER];
 
-		if (reverse)
-			myRank += 5;
 		switch (myRank) {
 		case 1:
 			map = text1_19;

@@ -3,7 +3,6 @@ package simulationBransing;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import monteCalro.State;
 import object.GameRecordData;
 import object.InitSetting;
 import object.ObjectPool;
@@ -26,11 +25,11 @@ public class SimulationBalancing {
 	private double[] weight_sita = new double[weightNumber];
 
 	/** 棋譜の読み込みデータの数 ***/
-	private static final int GAMERECORDDATA = 150;
+	private static final int GAMERECORDDATA = 200;
 	/** 学習の回数 **/
-	private static final int LEARNINGNUMBER = 200;
+	private static final int LEARNINGNUMBER = 300;
 	/** 平均勾配の算出計算回数 **/
-	private static final int MEANGRADIENTNUMBER = 200;
+	private static final int MEANGRADIENTNUMBER = 300;
 	/** 学習率 **/
 	private static final double ARUFA = 1.0;
 
@@ -41,8 +40,6 @@ public class SimulationBalancing {
 	private WeightData_S wd = new WeightData_S();
 	/** set用の変数 ***/
 	private double[] wd_weight = new double[InitSetting.WEIGHTNUMBER + 1];
-
-	private boolean first = true;
 
 	/**
 	 * 学習フェーズ
@@ -102,19 +99,12 @@ public class SimulationBalancing {
 
 			for (int j = 1; j <= InitSetting.WEIGHTNUMBER; j++) {
 				wd_weight[j] = weight_sita[j - 1];
-				if(wd_weight[j] != 0){
+				if (wd_weight[j] != 0) {
 					flag = true;
 				}
 			}
-			int pos = 0;
-			if (nowGF.isReverse()) {
-				pos = pos | 1;
-			}
-			if (nowGF.getState() == State.RENEW) {
-				pos = pos | 2;
-			}
-			if(flag){
-				wd.setWeight(pos, code, wd_weight.clone());
+			if (flag) {
+				wd.setWeight(nowGF.returnKey(), code, wd_weight.clone());
 			}
 			if (visitCounter % 100 == 0) {
 				wd.writeText();
@@ -212,7 +202,7 @@ public class SimulationBalancing {
 	public void update_sita(double miniMax, double expectedReward, double[] meanGradient) {
 		double result = ARUFA * (miniMax - expectedReward);
 		for (int i = 0; i < weightNumber; i++) {
-			weight_sita[i] += result * meanGradient[i];
+			this.weight_sita[i] += result * meanGradient[i];
 		}
 	}
 
@@ -230,38 +220,14 @@ public class SimulationBalancing {
 		double[] points = ObjectPool.getArrayDouble();
 		double result = 0;
 		double sum = 0;
-		boolean flag = true;
-
 		for (int i = 0; i < size; i++) {// 一手一手の特徴を求める
 			weight = gf.getWeight(weight, list.get(i));
 			result = Caluculater.calcPai_sita(this.weight_sita, weight); // 全てに対するπΘを計算
 			points[i] = result;
-			if (result != 0 && flag)
-				flag = false;
-		}
-
-		if (flag) {// 全ての重みpai_Sitaの値が0の時
-			for (int i = 0; i < size; i++) {
-				points[i] = 1;
-			}
-		} else {
-			points = Caluculater.scailingPai_sita(points, size);
-		}
-
-		for (int i = 0; i < size; i++) {
-			sum += points[i];
-		}
-		for (int i = 0; i < size; i++) {
-			points[i] = points[i] / sum;
-		}
-
-		sum = 0;
-		for (int i = 0; i < size; i++) { // 全ての合計を取得
-			sum += points[i];
+			sum += result;
 		}
 		sum = sum * Math.random(); // ランダムで変数を入れる
 		int pos = 0;
-
 		for (int i = 0; i < size; i++) {
 			sum -= (points[i]);
 			if (sum <= 0) {
@@ -293,27 +259,14 @@ public class SimulationBalancing {
 		double sum = 0;
 		double num = 0;
 		int pos = 0;
-		boolean flag = true;// 全ての手が0の場合の処理
 
 		for (int i = 0; i < size; i++) {// 一手一手の特徴を求める
 			weight = gf.getWeight(weight, map.get(i));
 			pai_Sita = Caluculater.calcPai_sita(this.weight_sita, weight); // 全てに対するπΘを計算
 			points[i] = pai_Sita;
-			if (pai_Sita != 0 && flag) {
-				flag = false;
-			}
+			num+= points[i];
 		}
-		if (flag) {
-			for (int i = 0; i < size; i++) {
-				points[i] = 1;
-				num += points[i];
-			}
-		} else {
-			points = Caluculater.scailingPai_sita(points, size);
-			for (int i = 0; i < size; i++) {
-				num += points[i];
-			}
-		}
+
 
 		for (int i = 0; i < size; i++) {// Pai_Sitaの完成
 			points[i] = points[i] / num;
@@ -363,49 +316,22 @@ public class SimulationBalancing {
 	 */
 	public int putHand_simulataion(ArrayList<Long> map, GameField gf, WeightData wd) {
 		int size = map.size();
-
 		double[] points = ObjectPool.getArrayDouble();
-		double[] sita = ObjectPool.getArrayDouble(); // 重みの特徴ベクトル
+		double[] sita = null; // 重みの特徴ベクトル
 		double pai_Sita = 0;
 		double sum = 0;
-		boolean flag = true; // 全ての重みが何も入っていない時の処理用変数
-
 		int pos = 0;
-		int grade = gf.getMyGrade();
-		boolean reverse = gf.isReverse();
 		int authenticationCode = gf.getAuthenticationCode_i();
-
 		for (int i = 0; i < size; i++) {// 一手一手の特徴を求める
 			weight = gf.getWeight(weight, map.get(i));// 重みの計算
-			sita = wd.getWeight(grade, reverse, authenticationCode);// 特徴ベクトルの計算
+			sita = wd.getWeight(gf.returnKey(), authenticationCode);// 特徴ベクトルの計算
 			pai_Sita = Caluculater.calcPai_sita(sita, weight); // 全てに対するπΘを計算
 			if (InitSetting.DEBUGMODE_W)
 				debugWeight(map.get(i), weight, sita, pai_Sita);
 			points[i] = pai_Sita;
-			if (pai_Sita != 0 && flag) {
-				flag = false;
-			}
-		}
-		if (flag) {
-			for (int i = 0; i < size; i++) {
-				points[i] = 1;
-			}
-		} else {
-			Caluculater.scailingPai_sita(points, size);
-		}
-		for (int i = 0; i < size; i++) {
-			sum += points[i];
-		}
-		for (int i = 0; i < size; i++) {
-			points[i] = points[i] / sum;
-		}
-		sum = 0;
-
-		for (int i = 0; i < size; i++) {
-			sum += points[i];
+			sum += pai_Sita;
 		}
 		sum = sum * Math.random(); // ランダムで変数を入れる
-
 		for (int i = 0; i < size; i++) {
 			sum -= points[i];
 			if (sum <= 0) {
