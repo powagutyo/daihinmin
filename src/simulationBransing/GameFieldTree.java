@@ -22,7 +22,6 @@ public class GameFieldTree {
 		visit = new int[2048];
 		childDepth = 1;
 	}
-
 	/**
 	 * UCBの値で手を決定する
 	 *
@@ -41,7 +40,6 @@ public class GameFieldTree {
 		int size = gameList.size();
 		double[] points = ObjectPool.getArrayDouble();
 		if (InitSetting.putHandMode == 2) {
-
 			for (int i = 0; i < size; i++) {
 				points[i] = gameList.get(i).getUCB();
 				sum += points[i];
@@ -84,6 +82,7 @@ public class GameFieldTree {
 		int orderCounter = 0;
 		int pos = 0;
 		parentGF = this.parent.clone();
+
 		while (true) {
 			if (orderSize <= orderCounter)
 				break;
@@ -99,7 +98,9 @@ public class GameFieldTree {
 					arrayGF.get(i).upDateUCB(visit[pos], winPoint, false);
 				}
 			}
+			parentGF = null;
 			parentGF = arrayGF.get(orderNum);
+			arrayGF = null;
 			orderCounter++;
 		}
 	}
@@ -113,6 +114,7 @@ public class GameFieldTree {
 		ArrayList<GameField> ag;
 		for (int i = 1; i <= size; i++) {
 			visit[i] = 0;
+			ag = null;
 			ag = childrenGameFeild.get(i);
 			arraySize = ag.size();
 			for (int j = 0; j < arraySize; j++) {
@@ -132,10 +134,8 @@ public class GameFieldTree {
 		parent = p;
 		childDepth = 1;
 	}
-
 	/**
 	 * 親を成長させる
-	 *
 	 * @param parent
 	 * @param arrayLong
 	 * @param wd
@@ -149,8 +149,8 @@ public class GameFieldTree {
 		for (int i = 0; i < size; i++) {
 			gf = ObjectPool.getGameField();
 			gf = parent.clone();
-			gf = growUpGameField(gf, arrayLong.get(i), true, wd);
 			gf.initChild(); // 子供の時のみ行う初期化
+			gf = growUpGameField(gf, arrayLong.get(i), true, wd);
 			gamelist.add(gf);
 		}
 		childrenGameFeild.put(childDepth, gamelist);
@@ -207,6 +207,8 @@ public class GameFieldTree {
 			putHand = gf.getPutHand();
 			if (putHand.size() == 1) {
 				num = putHand.get(0);
+				ObjectPool.releasePutHand(putHand);
+				putHand = null;
 			} else {
 				break;
 			}

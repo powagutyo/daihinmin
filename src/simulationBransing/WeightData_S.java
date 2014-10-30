@@ -4,45 +4,35 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import object.InitSetting;
 
 public class WeightData_S {
 
-	private HashMap<Integer, double[]> text1_19;
-	private HashMap<Integer, double[]> text2_19;
-	private HashMap<Integer, double[]> text3_19;
-	private HashMap<Integer, double[]> text4_19;
-	private HashMap<Integer, double[]> text5_19;
-	private HashMap<Integer, double[]> textr1_19;
-	private HashMap<Integer, double[]> textr2_19;
-	private HashMap<Integer, double[]> textr3_19;
-	private HashMap<Integer, double[]> textr4_19;
-	private HashMap<Integer, double[]> textr5_19;
-	private final String[] textNames;
+	private ArrayList<HashMap<Integer, double[]>> text;
+
+	private final String[] textNames = {
+			"./pai_Sita/002text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/012text_" + InitSetting.WEIGHTNUMBER + ".txt",
+			"./pai_Sita/102text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/112text_" + InitSetting.WEIGHTNUMBER + ".txt"
+			, "./pai_Sita/003text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/013text_" + InitSetting.WEIGHTNUMBER + ".txt",
+			"./pai_Sita/103text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/113text_" + InitSetting.WEIGHTNUMBER + ".txt"
+			, "./pai_Sita/004text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/014text_" + InitSetting.WEIGHTNUMBER + ".txt",
+			"./pai_Sita/104text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/114text_" + InitSetting.WEIGHTNUMBER + ".txt"
+			, "./pai_Sita/005text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/015text_" + InitSetting.WEIGHTNUMBER + ".txt",
+			"./pai_Sita/105text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/115text_" + InitSetting.WEIGHTNUMBER + ".txt"
+	};
 
 	/**
 	 * コンストラクタ
 	 */
 	public WeightData_S() {
-		textNames = new String[4];
-		textNames[0] = "./pai_Sita/00text_" + InitSetting.WEIGHTNUMBER + ".txt";
-		textNames[1] = "./pai_Sita/01text_" + InitSetting.WEIGHTNUMBER + ".txt";
-		textNames[2] = "./pai_Sita/10text_" + InitSetting.WEIGHTNUMBER + ".txt";
-		textNames[3] = "./pai_Sita/11text_" + InitSetting.WEIGHTNUMBER + ".txt";
-
-		text1_19 = new HashMap<Integer, double[]>();
-		text2_19 = new HashMap<Integer, double[]>();
-		text3_19 = new HashMap<Integer, double[]>();
-		text4_19 = new HashMap<Integer, double[]>();
-		text5_19 = new HashMap<Integer, double[]>();
-
-		textr1_19 = new HashMap<Integer, double[]>();
-		textr2_19 = new HashMap<Integer, double[]>();
-		textr3_19 = new HashMap<Integer, double[]>();
-		textr4_19 = new HashMap<Integer, double[]>();
-		textr5_19 = new HashMap<Integer, double[]>();
+		int size = textNames.length;
+		text = new ArrayList<HashMap<Integer, double[]>>(size);
+		for (int i = 0; i < size; i++) {
+			text.add(new HashMap<Integer, double[]>());
+		}
 	}
 
 	/**
@@ -57,112 +47,14 @@ public class WeightData_S {
 	 */
 	public void setWeight(int num, int authenticationCode, double[] weight) {
 		double[] result = null;
-		switch (num) {
-		case 0:
-			if (text1_19.containsKey(authenticationCode)) {
-				result = text1_19.remove(authenticationCode);
-				int size = weight.length;
-				for (int i = 0; i < size; i++) {
-					weight[i] += result[i];
-				}
+		if (text.get(num).containsKey(authenticationCode)) {
+			result = text.get(num).remove(authenticationCode);
+			int size = weight.length;
+			for (int i = 0; i < size; i++) {
+				weight[i] += result[i];
 			}
-			text1_19.put(authenticationCode, weight);
-			break;
-		case 1:
-			if (text2_19.containsKey(authenticationCode)) {
-				result = text2_19.remove(authenticationCode);
-				int size = weight.length;
-				for (int i = 0; i < size; i++) {
-					weight[i] += result[i];
-				}
-			}
-			text2_19.put(authenticationCode, weight);
-			break;
-		case 2:
-			if (text3_19.containsKey(authenticationCode)) {
-				result = text3_19.remove(authenticationCode);
-				int size = weight.length;
-				for (int i = 0; i < size; i++) {
-					weight[i] += result[i];
-				}
-			}
-			text3_19.put(authenticationCode, weight);
-			break;
-		case 3:
-			if (text4_19.containsKey(authenticationCode)) {
-				result = text4_19.remove(authenticationCode);
-				int size = weight.length;
-				for (int i = 0; i < size; i++) {
-					weight[i] += result[i];
-				}
-			}
-			text4_19.put(authenticationCode, weight);
-			break;
-		case 4:
-			if (text5_19.containsKey(authenticationCode)) {
-				result = text5_19.remove(authenticationCode);
-				int size = weight.length;
-				for (int i = 0; i < size; i++) {
-					weight[i] += result[i];
-				}
-			}
-			text5_19.put(authenticationCode, weight);
-			break;
-		case 5:
-			if (textr1_19.containsKey(authenticationCode)) {
-				result = textr1_19.remove(authenticationCode);
-				int size = weight.length;
-				for (int i = 0; i < size; i++) {
-					weight[i] += result[i];
-				}
-			}
-			textr1_19.put(authenticationCode, weight);
-			break;
-		case 6:
-			if (textr2_19.containsKey(authenticationCode)) {
-				result = textr2_19.remove(authenticationCode);
-				int size = weight.length;
-				for (int i = 0; i < size; i++) {
-					weight[i] += result[i];
-				}
-			}
-			textr2_19.put(authenticationCode, weight);
-			break;
-		case 7:
-			if (textr3_19.containsKey(authenticationCode)) {
-				result = textr3_19.remove(authenticationCode);
-				int size = weight.length;
-				for (int i = 0; i < size; i++) {
-					weight[i] += result[i];
-				}
-			}
-			textr3_19.put(authenticationCode, weight);
-			break;
-		case 8:
-			if (textr4_19.containsKey(authenticationCode)) {
-				result = textr4_19.remove(authenticationCode);
-				int size = weight.length;
-				for (int i = 0; i < size; i++) {
-					weight[i] += result[i];
-				}
-			}
-			textr4_19.put(authenticationCode, weight);
-			break;
-		case 9:
-			if (textr5_19.containsKey(authenticationCode)) {
-				result = textr5_19.remove(authenticationCode);
-				int size = weight.length;
-				for (int i = 0; i < size; i++) {
-					weight[i] += result[i];
-				}
-			}
-			textr5_19.put(authenticationCode, weight);
-			break;
-
-		default:
-			break;
+			text.get(num).put(authenticationCode, weight);
 		}
-
 	}
 
 
@@ -176,7 +68,8 @@ public class WeightData_S {
 			file = new File(textNames[i]);
 			try {
 				bw = new BufferedWriter(new FileWriter(file));
-				map = returnMap(i + 1);
+				map = null;
+				map = text.get(i);
 				for (int num : map.keySet()) {
 					sb = new StringBuffer();
 					sb.append(num);
@@ -188,58 +81,14 @@ public class WeightData_S {
 					bw.newLine();
 				}
 			} catch (IOException e) {
-				// TODO 自動生成された catch ブロック
 				e.printStackTrace();
 			} finally {
 				try {
 					bw.close();
 				} catch (IOException e) {
-					// TODO 自動生成された catch ブロック
 					e.printStackTrace();
 				}
 			}
 		}
 	}
-
-	public HashMap<Integer, double[]> returnMap(int num) {
-		HashMap<Integer, double[]> map = null;
-		switch (num) {
-		case 1:
-			map = text1_19;
-			break;
-		case 2:
-			map = text2_19;
-			break;
-		case 3:
-			map = text3_19;
-			break;
-		case 4:
-			map = text4_19;
-			break;
-		case 5:
-			map = text5_19;
-			break;
-		case 6:
-			map = textr1_19;
-			break;
-		case 7:
-			map = textr2_19;
-			break;
-		case 8:
-			map = textr3_19;
-			break;
-		case 9:
-			map = textr4_19;
-			break;
-		case 10:
-			map = textr5_19;
-			break;
-
-		default:
-
-			return null;
-		}
-		return map;
-	}
-
 }

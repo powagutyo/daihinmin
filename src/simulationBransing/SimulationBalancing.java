@@ -60,13 +60,11 @@ public class SimulationBalancing {
 			weight_sita[i] = 0;
 		}
 		char[] c;
-		int myGrade = nowGF.getMyGrade();
 		int code = nowGF.getAuthenticationCode_i();
 		int myHands = nowGF.turnPLayerHaveHand(nowGF.getTurnPlayer());
 		int se = nowGF.getMyHandsSquareError();
 		int allPlyerHands = nowGF.allPLayersHands();
-		int wonPLayer = nowGF.notWonPLayers();
-		int size = grd.size(myGrade);
+		int size = grd.size(myHands);
 		double miniMax = 0.0; // minMaxの値
 		double expectedReward = 0.0;// 期待報酬
 		double[] meanGradient = null; // 平均勾配
@@ -77,7 +75,7 @@ public class SimulationBalancing {
 			if (counter >= GAMERECORDDATA) {
 				break;
 			}
-			c = grd.getGameRecord(i, myGrade, myHands, wonPLayer, se, allPlyerHands);
+			c = grd.getGameRecord(i, myHands, se, allPlyerHands);
 			if (c != null) {
 				miniMax = gf.restoreGameRecord(c);
 
@@ -86,10 +84,9 @@ public class SimulationBalancing {
 				meanGradient = calcMeanGradient(ObjectPool.getGameField(), gf); // 平均勾配を計算
 
 				update_sita(miniMax, expectedReward, meanGradient);
-				// System.out.println(counter);
+
 				ObjectPool.releaseArrayDouble(meanGradient);
 				counter++;
-
 			}
 		}
 		if (InitSetting.LEARNING) {
@@ -108,11 +105,9 @@ public class SimulationBalancing {
 			}
 			if (visitCounter % 100 == 0) {
 				wd.writeText();
-
 			}
 		}
 		ObjectPool.releaseGameField(gf);
-
 	}
 
 	/**
@@ -141,10 +136,10 @@ public class SimulationBalancing {
 				gf.endTurn();// ターンなどの処理
 			}
 			counter++;
-			result += gf.returnWinPoint() / M;
+			result += gf.returnWinPoint();
 		}
 		ObjectPool.releaseGameField(gf);
-		return result;
+		return result / M;
 	}
 
 	/**
@@ -264,9 +259,8 @@ public class SimulationBalancing {
 			weight = gf.getWeight(weight, map.get(i));
 			pai_Sita = Caluculater.calcPai_sita(this.weight_sita, weight); // 全てに対するπΘを計算
 			points[i] = pai_Sita;
-			num+= points[i];
+			num += points[i];
 		}
-
 
 		for (int i = 0; i < size; i++) {// Pai_Sitaの完成
 			points[i] = points[i] / num;
