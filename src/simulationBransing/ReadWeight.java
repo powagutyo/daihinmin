@@ -48,7 +48,7 @@ public class ReadWeight extends Thread {
 						splitWeight = message.split(",");
 						visit = Double.parseDouble(splitWeight[1]);
 						for (int j = 0; j < InitSetting.WEIGHTNUMBER; j++) {
-							weight[j] = Double.parseDouble(splitWeight[j + 2]) / visit;
+							weight[j] = Double.parseDouble(splitWeight[j + 1]) ;
 						}
 						//Caluculater.scailingPai_sita(weight, InitSetting.WEIGHTNUMBER);
 						wd.setWeight(i, Integer.parseInt(splitWeight[0])

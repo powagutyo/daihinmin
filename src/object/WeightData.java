@@ -6,7 +6,7 @@ import java.util.HashMap;
 public class WeightData {
 	private ArrayList<HashMap<Integer, double[]>> text;
 
-	private final static int textSize = 12;
+	private final static int textSize = 16;
 
 	/** 読み込みが終了したかどうかの判定用 ***/
 	private boolean finish = false;
@@ -53,11 +53,8 @@ public class WeightData {
 		double[] result = new double[InitSetting.WEIGHTNUMBER];
 
 		if (!map.containsKey(authenticationCode)) {
-			result = new double[InitSetting.WEIGHTNUMBER];
-			for (int i = 0; i < InitSetting.WEIGHTNUMBER; i++) {
-				result[i] = 0;
-			}
-			return result;
+
+			return null;
 		}
 		return map.get(authenticationCode);
 	}

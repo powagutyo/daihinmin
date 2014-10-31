@@ -95,14 +95,16 @@ public class CalcWeightRange extends Thread {
 								for (int a = allPlayersHands - range_a; a < allPlayersHands + range_a; a++) {
 									if ((a < 2 || a > 53))
 										continue;
-									authenticationCode = m * 10000 + a * 100 + se ;
+									authenticationCode = m * 10000 + a * 100 + se;
 
-									result = wd.getWeight(i + 1, authenticationCode);
-
-									visit += 1.0;
-									for (int j = 0; j < InitSetting.WEIGHTNUMBER; j++) {
-										weight[j] += result[j];
+									result = wd.getWeight(i, authenticationCode);
+									if (result != null) {
+										visit += 1.0;
+										for (int j = 0; j < InitSetting.WEIGHTNUMBER; j++) {
+											weight[j] += result[j];
+										}
 									}
+
 								}
 							}
 							if (visit != 0) {
@@ -128,7 +130,8 @@ public class CalcWeightRange extends Thread {
 		} finally {
 			try {
 				fw.close();
-				bf.close();
+				if (bf != null)
+					bf.close();
 			} catch (IOException e) {
 				// TODO 自動生成された catch ブロック
 				e.printStackTrace();
