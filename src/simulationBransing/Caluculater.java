@@ -99,16 +99,28 @@ public class Caluculater {
 		}
 
 		for (int i = 0; i < 5; i++) {
+<<<<<<< Updated upstream
 			num += (i + 1) * (i + 1) * gf.returnWinPoints(i + 1);
 		}
 
 		double x = num / (visit * 25.0);
+=======
+
+			num += Math.pow((i + 1) / 5.0, 2) * gf.returnWinPoints(i + 1);
+		}
+
+		double x = num / (visit);
+>>>>>>> Stashed changes
 
 		double y = winPro * winPro;
 
 		double z = Math.sqrt(2.0 * Math.log(playout) / visit);
 		num = x - y + z;
 
+<<<<<<< Updated upstream
+=======
+		num = x - y + z;
+>>>>>>> Stashed changes
 		if (num > 0.25) {
 			num = 0.25;
 		}

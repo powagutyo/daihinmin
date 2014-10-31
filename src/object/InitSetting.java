@@ -10,7 +10,11 @@ public class InitSetting {
 	public static final boolean DEBUGMODE_W = false;
 
 	/** UCTを回す回数 **/
+<<<<<<< Updated upstream
 	public static final int COUNT = 1;// 回す数
+=======
+	public static final int COUNT = 2000;// 回す数
+>>>>>>> Stashed changes
 	/** 木の閾値 ***/
 	public static final int THRESHOLD = 40;// 閾値
 	/*** 読み切りプログラムを使うかどうか */

@@ -103,8 +103,13 @@ public class GameField implements Cloneable {
 	/**
 	 * 空のコンストラクタ
 	 */
+<<<<<<< Updated upstream
 	public GameField() {
 		rank = 0;
+=======
+	public GameField(int playerNum, BotSkeleton bs, FieldData fd, MyData md) {
+
+>>>>>>> Stashed changes
 		for (int i = 0; i < 4; i++) {
 			rank_3 = rank_3 | ONE << (i * 13);
 		}
@@ -121,6 +126,14 @@ public class GameField implements Cloneable {
 	 */
 	public void firstInit(int playerNum, BotSkeleton bs, FieldData fd, MyData md) {
 		initChild();
+<<<<<<< Updated upstream
+=======
+		for (int i = 0; i < 4; i++) {
+			rank_3 = rank_3 | ONE << (i * 13);
+		}
+		rank_3 = rank_3 << 1;
+		playersHands = ObjectPool.getPLayersHands();
+>>>>>>> Stashed changes
 		int counter = 0;
 		firstWonPlayer = 0;
 		canGrowUpTree = true;
@@ -232,6 +245,28 @@ public class GameField implements Cloneable {
 		return 0;
 	}
 
+<<<<<<< Updated upstream
+=======
+	public int returnKey() {
+		int pos = 0;
+		if (reverse) {
+			pos = pos | 1;
+		}
+		if (state == State.RENEW) {
+			pos = pos | 2;
+		}
+		pos = pos + (notWonPLayers() - 2) * 4;
+		return pos;
+	}
+
+	/**
+	 * 空のコンストラクタ
+	 */
+	public GameField() {
+
+	}
+
+>>>>>>> Stashed changes
 	@Override
 	public GameField clone() {
 		GameField gf;

@@ -25,7 +25,11 @@ public class SimulationBalancing {
 	private double[] weight_sita = new double[weightNumber];
 
 	/** 棋譜の読み込みデータの数 ***/
+<<<<<<< Updated upstream
 	private static final int GAMERECORDDATA = 300;
+=======
+	private static final int GAMERECORDDATA = 200;
+>>>>>>> Stashed changes
 	/** 学習の回数 **/
 	private static final int LEARNINGNUMBER = 300;
 	/** 平均勾配の算出計算回数 **/
@@ -41,8 +45,11 @@ public class SimulationBalancing {
 	/** set用の変数 ***/
 	private double[] wd_weight = new double[InitSetting.WEIGHTNUMBER + 1];
 
+<<<<<<< Updated upstream
 	private boolean first =  true;
 
+=======
+>>>>>>> Stashed changes
 	/**
 	 * 学習フェーズ
 	 *
@@ -266,8 +273,13 @@ public class SimulationBalancing {
 			weight = gf.getWeight(weight, map.get(i));
 			pai_Sita = Caluculater.calcPai_sita(this.weight_sita, weight); // 全てに対するπΘを計算
 			points[i] = pai_Sita;
+<<<<<<< Updated upstream
 			num += points[i];
+=======
+			num+= points[i];
+>>>>>>> Stashed changes
 		}
+
 
 		for (int i = 0; i < size; i++) {// Pai_Sitaの完成
 			points[i] = points[i] / num;
