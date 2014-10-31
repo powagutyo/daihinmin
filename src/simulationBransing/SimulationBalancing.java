@@ -25,7 +25,7 @@ public class SimulationBalancing {
 	private double[] weight_sita = new double[weightNumber];
 
 	/** 棋譜の読み込みデータの数 ***/
-	private static final int GAMERECORDDATA = 200;
+	private static final int GAMERECORDDATA = 300;
 	/** 学習の回数 **/
 	private static final int LEARNINGNUMBER = 300;
 	/** 平均勾配の算出計算回数 **/
@@ -40,6 +40,8 @@ public class SimulationBalancing {
 	private WeightData_S wd = new WeightData_S();
 	/** set用の変数 ***/
 	private double[] wd_weight = new double[InitSetting.WEIGHTNUMBER + 1];
+
+	private boolean first =  true;
 
 	/**
 	 * 学習フェーズ
@@ -92,8 +94,13 @@ public class SimulationBalancing {
 		if (InitSetting.LEARNING) {
 
 			System.out.println("visit" + visitCounter);
+
+			if(first){
+				wd.readText();
+			}
 			boolean flag = false;
 
+			first = false;
 			for (int j = 1; j <= InitSetting.WEIGHTNUMBER; j++) {
 				wd_weight[j] = weight_sita[j - 1];
 				if (wd_weight[j] != 0) {

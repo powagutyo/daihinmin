@@ -336,7 +336,7 @@ public class GameField implements Cloneable {
 			playersHands[i] = 0;
 		}
 		notLookCards = 0;
-		for (int i = 0; i < 53; i++) {
+		for (int i = 0; i < CARDNUM; i++) {
 			num = Character.getNumericValue(data[counter]);
 			if (num != 9) {
 				playersHands[num] = playersHands[num] | (ONE << i);
@@ -362,12 +362,13 @@ public class GameField implements Cloneable {
 			}
 			counter++;
 		}
+		rank = 0;
 		// rank
 		num = Character.getNumericValue(data[counter]);
-		rank = num * 10;
+		rank += num * 10;
 		counter++;
 		num = Character.getNumericValue(data[counter]);
-		rank = num;
+		rank += num;
 		counter++;
 		// 革命
 		num = Character.getNumericValue(data[counter]);
@@ -887,7 +888,7 @@ public class GameField implements Cloneable {
 		// スペ3の判定
 		long playerHand = playersHands[turnPlayer];// 自分の手札
 
-		if (!state.equals(State.RENEW) && (rank == 14 || rank == 0)) {// JOKERが場に出されている時
+		if (state != State.RENEW && (rank == 14 || rank == 0)) {// JOKERが場に出されている時
 			if ((playerHand & (ONE << 1)) != 0) { // スぺ3を持っている時
 				list.add((ONE << 1));
 				return list;
@@ -1165,6 +1166,9 @@ public class GameField implements Cloneable {
 				break;
 			case RENEW:// renewの時
 				list = returnAllResult_renewMeld(list);// renew時に出す役を受ける
+				if(list == null){
+					System.out.println();
+				}
 				break;
 			default:
 				System.out
@@ -1213,6 +1217,10 @@ public class GameField implements Cloneable {
 	 */
 	public void useSimulationBarancing(boolean leraning, DataConstellation dc) {
 		ArrayList<Long> list = getPutHand(); // 複数の候補手を探す
+		if(list.size() == 0){
+			System.out.println();
+			 list = getPutHand();
+		}
 		if (list.get(0) == 0) {
 			passPlayer = passPlayer | (1 << turnPlayer);
 		} else {// PASS以外の時
@@ -1239,8 +1247,9 @@ public class GameField implements Cloneable {
 			}
 			updatePlace(list.get(pos));
 		}
-		ObjectPool.releasePutHand(list);
-
+		if(list != null){
+			ObjectPool.releasePutHand(list);
+		}
 	}
 
 	/**
@@ -1270,8 +1279,9 @@ public class GameField implements Cloneable {
 			visit += 1.0;
 			updatePlace(list.get(pos));
 		}
-
-		ObjectPool.releasePutHand(list);
+		if(list != null){
+			ObjectPool.releasePutHand(list);
+		}
 
 		return visit;
 	}

@@ -1,7 +1,9 @@
 package simulationBransing;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -53,7 +55,39 @@ public class WeightData_S {
 			for (int i = 0; i < size; i++) {
 				weight[i] += result[i];
 			}
-			text.get(num).put(authenticationCode, weight);
+		}
+		text.get(num).put(authenticationCode, weight);
+	}
+
+	public void readText(){
+		int size = textNames.length;
+		File file;
+		BufferedReader bf;
+		String[] splitWeight;
+		String message = "";
+		double visit;
+		double[] weight = new double[InitSetting.WEIGHTNUMBER + 1];
+
+		for (int i = 0; i < size; i++) {
+			try {
+				file = new File(textNames[i]);
+				bf = new BufferedReader(new FileReader(file));
+				while (true) {
+					message = bf.readLine();
+					if (message == null) {
+						break;
+					}
+					splitWeight = message.split(",");
+					for (int j = 0; j < InitSetting.WEIGHTNUMBER; j++) {
+						weight[j] = Double.parseDouble(splitWeight[j + 1]) ;
+					}
+					text.get(i).put(Integer.parseInt(splitWeight[0]), weight.clone());
+
+				}
+				bf.close();
+			} catch (IOException e) {
+				System.out.println();
+			}
 		}
 	}
 

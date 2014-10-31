@@ -184,7 +184,9 @@ public class GameFieldTree {
 		}
 		childrenGameFeild.put(childDepth, gamelist);
 		GF.setHaveChildNumber(childDepth); // どの子供を持っているかの番号を渡す
-		ObjectPool.releasePutHand(putHand);
+		if(putHand != null){
+			ObjectPool.releasePutHand(putHand);
+		}
 		childDepth++;
 	}
 
@@ -212,9 +214,6 @@ public class GameFieldTree {
 			} else {
 				break;
 			}
-		}
-		if (putHand != null) {
-			ObjectPool.releasePutHand(putHand);
 		}
 		return gf;
 	}

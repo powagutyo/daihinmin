@@ -12,11 +12,11 @@ public class GameRecordData {
 
 	public GameRecordData() {
 
-		gameRecordRead();
 		gameRecord = new ArrayList<List<RecordData>>();
-		for (int i = 1; i < 11; i++) {
+		for (int i = 0; i < 12; i++) {
 			gameRecord.add(new ArrayList<RecordData>());
 		}
+		gameRecordRead();
 	}
 
 	public char[] getGameRecord(int number, int myHands, int sc, int allPLayerHands) {
