@@ -79,10 +79,13 @@ public class MonteCalro {
 		GameField playGF = ObjectPool.getGameField();
 
 		parentGF.firstInit(PLAYERS, bs, fd, md);
-		parentGF.initPLaceGameFiled(mh.getPlayersHands());// gfの場のカード情報とfirstGFの初期化
+		if(InitSetting.randomInitHandMode){
+			parentGF.initPLaceGameFiled(initHands(md, fd));// gfの場のカード情報とfirstGFの初期化
+		}else{
+			parentGF.initPLaceGameFiled(mh.getPlayersHands());// gfの場のカード情報とfirstGFの初期化
+		}
 
 		gft.init(parentGF);
-
 		long number = 0;
 		ArrayList<Long> cards = ObjectPool.getArrayLong();
 		for (int i = 0; i < arraySize; i++) {
@@ -114,6 +117,10 @@ public class MonteCalro {
 
 		// メインループ
 		for (int playout = 1; playout <= COUNT; playout++) {
+			if(InitSetting.randomInitHandMode && playout % 2000 == 0){
+				gft.realseChildrenOfAllNonParentGameFeild();
+				parentGF.initPLaceGameFiled(initHands(md, fd));// gfの場のカード情報とfirstGFの初期化
+			}
 
 			if (InitSetting.DEBUGMODE) {
 				System.out.println("playout" + playout);
@@ -136,10 +143,10 @@ public class MonteCalro {
 					putRandom = gft.getUCBPos(playGF.getHaveChildNumber(), playGF, dc.getWd(), learning);
 
 					meldDataOrder.add(putRandom);// 木の通った順番を記憶する
-
+					System.out.println();
 					playGF = gft.returnGameFeild(playGF.getHaveChildNumber(), putRandom).clone();
 
-					if (playGF.checkGoalPlayer())//game終了木だった時
+					if (playGF.checkGoalPlayer())// game終了木だった時
 						break;
 
 					growUpChildren = playGF.doGrowUpTree(); // 木が成長できるかどうかの探索
@@ -175,6 +182,50 @@ public class MonteCalro {
 
 		return arrayListMelds.get(resultPos).getMeld();
 
+	}
+
+	/**
+	 * 手札を生成するメソッド
+	 *
+	 * @return 手札の配列を返す
+	 */
+	private int[][] initHands(MyData md, FieldData fd) {
+		int[][] resultHands = new int[5][53];
+
+		ArrayList<Integer> notLookCards = ObjectPool.getArrayInt();// まだ見えていないカード群を格納
+
+		int[] feild = md.getField();// 場の残っているカードの配列をコピってあげる
+
+		// 初期化
+		for (int i = 0; i < 53; i++) {
+			for (int j = 0; j < 5; j++) {
+				resultHands[j][i] = 0;
+			}
+			if (feild[i] == 1)// まだ見えていないカードだった場合
+				notLookCards.add(i);
+		}
+
+		int arraySize = 0;
+		int seatSize = 0;
+		int random = 0;
+
+		for (int i = 0; i < 5; i++) {
+			if (i == mySeat) {// 自分の座席の時
+				resultHands[i] = md.getMyHand();// 自分の手をそのまま入れてあげる
+			} else {// それ以外
+				seatSize = fd.getSeatsHandSize(i);// 座席のカード枚数を登録
+				// カードの枚数分ランダムに入れてあげる
+				for (int j = 0; j < seatSize; j++) {
+					arraySize = notLookCards.size();// 見えていないカードの合計枚数
+					random = (int) (Math.random() * arraySize);// ランダムで抜き出すカードを入れる
+
+					resultHands[i][notLookCards.remove(random)] = 1;
+				}
+			}
+		}
+
+		ObjectPool.releaseArrayInt(notLookCards);
+		return resultHands;
 	}
 
 	/**

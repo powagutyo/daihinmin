@@ -22,6 +22,7 @@ public class GameFieldTree {
 		visit = new int[2048];
 		childDepth = 1;
 	}
+
 	/**
 	 * UCBの値で手を決定する
 	 *
@@ -111,17 +112,14 @@ public class GameFieldTree {
 	public void realseAllGameFeild() {
 		int size = childrenGameFeild.size();
 		int arraySize = 0;
-		ArrayList<GameField> ag;
 		for (int i = 1; i <= size; i++) {
 			visit[i] = 0;
-			ag = null;
-			ag = childrenGameFeild.get(i);
-			arraySize = ag.size();
+			arraySize = childrenGameFeild.get(i).size();
 			for (int j = 0; j < arraySize; j++) {
-				ag.get(0).release();
-				ObjectPool.releaseGameField(ag.remove(0));
+				childrenGameFeild.get(i).get(0).release();
+				ObjectPool.releaseGameField(childrenGameFeild.get(i).remove(0));
 			}
-			ObjectPool.releaseGameFeilds(ag);
+			ObjectPool.releaseGameFeilds(childrenGameFeild.remove(i));
 		}
 		parent.release();
 		ObjectPool.releaseGameField(parent);
@@ -129,13 +127,38 @@ public class GameFieldTree {
 		childDepth = 1;
 	}
 
+	/**
+	 * すべてのGameFieldクラスをリリースする
+	 */
+	public void realseChildrenOfAllNonParentGameFeild() {
+		int size = childrenGameFeild.size();
+		int arraySize = 0;
+		ArrayList<GameField> ag;
+		for (int i = 2; i <= size; i++) {
+			visit[i] = 0;
+			arraySize = childrenGameFeild.get(i).size();
+			for (int j = 0; j < arraySize; j++) {
+				childrenGameFeild.get(i).get(0).release();
+				ObjectPool.releaseGameField(childrenGameFeild.get(i).remove(0));
+			}
+			ObjectPool.releaseGameFeilds(childrenGameFeild.remove(i));
+		}
+		arraySize = childrenGameFeild.get(1).size();
+		for (int j = 0; j < arraySize; j++) {
+			childrenGameFeild.get(1).get(j).initHandMode();
+		}
+		childDepth = 2;
+	}
+
 	public void init(GameField p) {
 		childrenGameFeild.clear();
 		parent = p;
 		childDepth = 1;
 	}
+
 	/**
 	 * 親を成長させる
+	 *
 	 * @param parent
 	 * @param arrayLong
 	 * @param wd
@@ -184,7 +207,7 @@ public class GameFieldTree {
 		}
 		childrenGameFeild.put(childDepth, gamelist);
 		GF.setHaveChildNumber(childDepth); // どの子供を持っているかの番号を渡す
-		if(putHand != null){
+		if (putHand != null) {
 			ObjectPool.releasePutHand(putHand);
 		}
 		childDepth++;

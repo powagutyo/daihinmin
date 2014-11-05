@@ -49,6 +49,9 @@ public class GameField implements Cloneable {
 	private double UCB;
 	/** 訪問回数 ***/
 	private int visit;
+	/***訪問回数の合計***/
+	private int visit_sum;
+
 	/** 出したカードの役 **/
 	private long yaku;
 
@@ -205,6 +208,9 @@ public class GameField implements Cloneable {
 	}
 
 	public double getWinPoint() {
+		if(InitSetting.randomInitHandMode){
+			return (double) won / (double) visit_sum;
+		}
 		return (double) won / (double) visit;
 	}
 
@@ -1166,9 +1172,6 @@ public class GameField implements Cloneable {
 				break;
 			case RENEW:// renewの時
 				list = returnAllResult_renewMeld(list);// renew時に出す役を受ける
-				if (list == null) {
-					System.out.println();
-				}
 				break;
 			default:
 				System.out
@@ -1906,11 +1909,22 @@ public class GameField implements Cloneable {
 		}
 		return counter;
 	}
+	/**
+	 * HandModeの時のinit
+	 */
+	public void initHandMode(){
+		visit_sum += visit;
+		visit = 0;
+		HaveChildNumber = 0;
+		canGrowUpTree = true;
+
+	}
 
 	/**
 	 * 全ての配列をObjectPoolにリリースするメソッド
 	 */
 	public void release() {
+		visit_sum = 0;
 		ObjectPool.releasePLayersHands(playersHands);
 		playersHands = null;
 	}
@@ -2038,5 +2052,8 @@ public class GameField implements Cloneable {
 
 	public void setGrade(int grade) {
 		this.grade = grade;
+	}
+	public int getVisit_sum() {
+		return visit_sum;
 	}
 }
