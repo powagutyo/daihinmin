@@ -65,7 +65,6 @@ public class WeightData_S {
 		BufferedReader bf;
 		String[] splitWeight;
 		String message = "";
-		double visit;
 		double[] weight = new double[InitSetting.WEIGHTNUMBER + 1];
 
 		for (int i = 0; i < size; i++) {

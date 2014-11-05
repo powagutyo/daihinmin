@@ -92,14 +92,10 @@ public class CalcWeightRange extends Thread {
 								if ((m < 1 || m > 12))
 									continue;
 
-<<<<<<< Updated upstream
 								for (int a = allPlayersHands - range_a; a < allPlayersHands + range_a; a++) {
 									if ((a < 2 || a > 53))
 										continue;
 									authenticationCode = m * 10000 + a * 100 + se;
-=======
-										result = wd.getWeight(i + 1, authenticationCode);
->>>>>>> Stashed changes
 
 									result = wd.getWeight(i, authenticationCode);
 									if (result != null) {

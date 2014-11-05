@@ -46,66 +46,13 @@ public class WeightData {
 	 *            認証コード
 	 * @return
 	 */
-<<<<<<< Updated upstream
 	public double[] getWeight(int key, int authenticationCode) {
-=======
-	public double[] getWeight(int myRank, int authenticationCode) {
->>>>>>> Stashed changes
 
 		HashMap<Integer, double[]> map = null;
 		map = text.get(key);
-		double[] result = new double[InitSetting.WEIGHTNUMBER];
+		double[] result = ObjectPool.getArrayDouble();
 
-<<<<<<< Updated upstream
 		if (!map.containsKey(authenticationCode)) {
-=======
-
-		switch (myRank) {
-		case 1:
-			map = text1_19;
-			break;
-		case 2:
-			map = text2_19;
-			break;
-		case 3:
-			map = text3_19;
-			break;
-		case 4:
-			map = text4_19;
-			break;
-		case 5:
-			map = text5_19;
-			break;
-		case 6:
-			map = textr1_19;
-			break;
-		case 7:
-			map = textr2_19;
-			break;
-		case 8:
-			map = textr3_19;
-			break;
-		case 9:
-			map = textr4_19;
-			break;
-		case 10:
-			map = textr5_19;
-			break;
-
-		default:
-			result = new double[InitSetting.WEIGHTNUMBER];
-			for (int i = 0; i < InitSetting.WEIGHTNUMBER ; i++) {
-				result[i] = 0;
-			}
-			return result;
-		}
-		if(!map.containsKey(authenticationCode)){
-			result = new double[InitSetting.WEIGHTNUMBER];
-			for (int i = 0; i < InitSetting.WEIGHTNUMBER; i++) {
-				result[i] = 0;
-			}
-			return result;
->>>>>>> Stashed changes
 
 			return null;
 		}

@@ -103,13 +103,8 @@ public class GameField implements Cloneable {
 	/**
 	 * 空のコンストラクタ
 	 */
-<<<<<<< Updated upstream
 	public GameField() {
 		rank = 0;
-=======
-	public GameField(int playerNum, BotSkeleton bs, FieldData fd, MyData md) {
-
->>>>>>> Stashed changes
 		for (int i = 0; i < 4; i++) {
 			rank_3 = rank_3 | ONE << (i * 13);
 		}
@@ -126,14 +121,6 @@ public class GameField implements Cloneable {
 	 */
 	public void firstInit(int playerNum, BotSkeleton bs, FieldData fd, MyData md) {
 		initChild();
-<<<<<<< Updated upstream
-=======
-		for (int i = 0; i < 4; i++) {
-			rank_3 = rank_3 | ONE << (i * 13);
-		}
-		rank_3 = rank_3 << 1;
-		playersHands = ObjectPool.getPLayersHands();
->>>>>>> Stashed changes
 		int counter = 0;
 		firstWonPlayer = 0;
 		canGrowUpTree = true;
@@ -245,28 +232,6 @@ public class GameField implements Cloneable {
 		return 0;
 	}
 
-<<<<<<< Updated upstream
-=======
-	public int returnKey() {
-		int pos = 0;
-		if (reverse) {
-			pos = pos | 1;
-		}
-		if (state == State.RENEW) {
-			pos = pos | 2;
-		}
-		pos = pos + (notWonPLayers() - 2) * 4;
-		return pos;
-	}
-
-	/**
-	 * 空のコンストラクタ
-	 */
-	public GameField() {
-
-	}
-
->>>>>>> Stashed changes
 	@Override
 	public GameField clone() {
 		GameField gf;
@@ -1201,7 +1166,7 @@ public class GameField implements Cloneable {
 				break;
 			case RENEW:// renewの時
 				list = returnAllResult_renewMeld(list);// renew時に出す役を受ける
-				if(list == null){
+				if (list == null) {
 					System.out.println();
 				}
 				break;
@@ -1252,9 +1217,9 @@ public class GameField implements Cloneable {
 	 */
 	public void useSimulationBarancing(boolean leraning, DataConstellation dc) {
 		ArrayList<Long> list = getPutHand(); // 複数の候補手を探す
-		if(list.size() == 0){
+		if (list.size() == 0) {
 			System.out.println();
-			 list = getPutHand();
+			list = getPutHand();
 		}
 		if (list.get(0) == 0) {
 			passPlayer = passPlayer | (1 << turnPlayer);
@@ -1282,7 +1247,7 @@ public class GameField implements Cloneable {
 			}
 			updatePlace(list.get(pos));
 		}
-		if(list != null){
+		if (list != null) {
 			ObjectPool.releasePutHand(list);
 		}
 	}
@@ -1314,7 +1279,7 @@ public class GameField implements Cloneable {
 			visit += 1.0;
 			updatePlace(list.get(pos));
 		}
-		if(list != null){
+		if (list != null) {
 			ObjectPool.releasePutHand(list);
 		}
 
@@ -1664,24 +1629,27 @@ public class GameField implements Cloneable {
 	 * @return
 	 */
 	public int breakThePair(int[] weight, long num, int counter) {
-		if (state != State.SEQUENCE) { // 階段の時のみは省略
-			if (state == State.SINGLE && (num & ONE) != 0) {
-				weight[counter] = 0;
-			} else {
-				int size = Long.bitCount(num);
-				long playersHand = playersHands[turnPlayer];
-				if ((num & ONE) != 0) {// jokerを抜く
-					size--;
-				}
-				long pair = rank_3;
-				for (int i = 0; i < 13; i++) {
-					if ((num & pair) != 0) {
-						if (size < Long.bitCount(playersHand & pair)) {
-							weight[counter] = 1;
-							break;
-						}
+		if (turnPLayerHaveHand(turnPlayer) >= 2) {
+			weight[counter] = 1;
+			if (state != State.SEQUENCE) { // 階段の時のみは省略
+				if (state == State.SINGLE && (num & ONE) != 0) {
+					weight[counter] = 0;
+				} else {
+					int size = Long.bitCount(num);
+					long playersHand = playersHands[turnPlayer];
+					if ((num & ONE) != 0) {// jokerを抜く
+						size--;
 					}
-					pair = pair << 1;
+					long pair = rank_3;
+					for (int i = 0; i < 13; i++) {
+						if ((num & pair) != 0) {
+							if (size < Long.bitCount(playersHand & pair)) {
+								weight[counter] = 0;
+								break;
+							}
+						}
+						pair = pair << 1;
+					}
 				}
 			}
 		}
@@ -1700,27 +1668,29 @@ public class GameField implements Cloneable {
 	 * @return
 	 */
 	public int breakTheSequence(int[] weight, long num, int counter) {
-		if (state != State.SEQUENCE) {
-			long sequcene = 7;
-			// TODO Sequenceのsuits込みの長いlongを作成する
-			sequcene = sequcene << 1;
-			long n = 0;
-			boolean result = false;
-			for (int i = 0; i < 11; i++) {// ランク
-				for (int j = 0; j < SUITSNUM; j++) {
-					n = sequcene << (j * 13 + i);
-					if ((num & n) != 0) {
-						n = n & playersHands[turnPlayer];
-						if (Long.bitCount(n) >= 3) {
-							weight[counter] = 1;
-							result = true;
-							break;
+		if (turnPLayerHaveHand(turnPlayer) >= 3) {
+			weight[counter] = 1;
+			if (state != State.SEQUENCE) {
+				long sequcene = 7;
+				sequcene = sequcene << 1;
+				long n = 0;
+				boolean result = false;
+				for (int i = 0; i < 11; i++) {// ランク
+					for (int j = 0; j < SUITSNUM; j++) {
+						n = sequcene << (j * 13 + i);
+						if ((num & n) != 0) {
+							n = n & playersHands[turnPlayer];
+							if (Long.bitCount(n) >= 3) {
+								weight[counter] = 0;
+								result = true;
+								break;
+							}
 						}
 					}
+					if (result)
+						break;
+					sequcene = sequcene << 1;
 				}
-				if (result)
-					break;
-				sequcene = sequcene << 1;
 			}
 		}
 		counter++;
@@ -1738,18 +1708,21 @@ public class GameField implements Cloneable {
 	 * @return
 	 */
 	public int isStrongCard(int[] weight, long num, int counter) {
-		long n = rank_3 << 12;
-		long playerHand = playersHands[turnPlayer];
-		for (int i = 0; i < 13; i++) {
-			if ((n & playerHand) != 0) {
-				if ((n & num) != 0) {
-					weight[counter] = 1;
+		if (turnPLayerHaveHand(turnPlayer) != 1) {
+			weight[counter] = 1;
+			long n = rank_3 << 12;
+			long playerHand = playersHands[turnPlayer];
+			for (int i = 0; i < 13; i++) {
+				if ((n & playerHand) != 0) {
+					if ((n & num) != 0) {
+						weight[counter] = 0;
+					}
+					break;
 				}
-				break;
+				n = n >> 1;
 			}
-			n = n >> 1;
+			counter++;
 		}
-		counter++;
 		return counter;
 	}
 
@@ -1762,16 +1735,18 @@ public class GameField implements Cloneable {
 	 * @return
 	 */
 	public int isWeekCard(int[] weight, long num, int counter) {
-		long n = rank_3;
-		long playerHand = playersHands[turnPlayer];
-		for (int i = 0; i < 13; i++) {
-			if ((n & playerHand) != 0) {
-				if ((n & num) != 0) {
-					weight[counter] = 1;
+		if (turnPLayerHaveHand(turnPlayer) != 1) {
+			long n = rank_3;
+			long playerHand = playersHands[turnPlayer];
+			for (int i = 0; i < 13; i++) {
+				if ((n & playerHand) != 0) {
+					if ((n & num) != 0) {
+						weight[counter] = 1;
+					}
+					break;
 				}
-				break;
+				n = n << 1;
 			}
-			n = n << 1;
 		}
 		counter++;
 		return counter;
@@ -1817,7 +1792,7 @@ public class GameField implements Cloneable {
 				size = 5;
 			}
 			size--;
-			weight[counter] = 1;
+			weight[counter + size] = 1;
 		}
 		counter += 5;
 		return counter;

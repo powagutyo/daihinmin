@@ -10,22 +10,18 @@ public class InitSetting {
 	public static final boolean DEBUGMODE_W = false;
 
 	/** UCTを回す回数 **/
-<<<<<<< Updated upstream
 	public static final int COUNT = 1;// 回す数
-=======
-	public static final int COUNT = 2000;// 回す数
->>>>>>> Stashed changes
 	/** 木の閾値 ***/
 	public static final int THRESHOLD = 40;// 閾値
 	/*** 読み切りプログラムを使うかどうか */
-	public static final boolean ONYOMIKIRI = false;
+	public static final boolean ONYOMIKIRI =false;
 
 	public static final long YOMIKIRITIMRLIMIT = 30;
 
 	/** 学習させるかどうか **/
 	public static final boolean LEARNING =true;
 
-	public static final boolean GAMERECORD = false;
+	public static final boolean GAMERECORD =false;
 
 	public static final boolean DOREADWEIGHT = false;
 

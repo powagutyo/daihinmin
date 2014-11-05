@@ -25,11 +25,7 @@ public class SimulationBalancing {
 	private double[] weight_sita = new double[weightNumber];
 
 	/** 棋譜の読み込みデータの数 ***/
-<<<<<<< Updated upstream
 	private static final int GAMERECORDDATA = 300;
-=======
-	private static final int GAMERECORDDATA = 200;
->>>>>>> Stashed changes
 	/** 学習の回数 **/
 	private static final int LEARNINGNUMBER = 300;
 	/** 平均勾配の算出計算回数 **/
@@ -45,11 +41,8 @@ public class SimulationBalancing {
 	/** set用の変数 ***/
 	private double[] wd_weight = new double[InitSetting.WEIGHTNUMBER + 1];
 
-<<<<<<< Updated upstream
-	private boolean first =  true;
+	private boolean first = true;
 
-=======
->>>>>>> Stashed changes
 	/**
 	 * 学習フェーズ
 	 *
@@ -102,7 +95,7 @@ public class SimulationBalancing {
 
 			System.out.println("visit" + visitCounter);
 
-			if(first){
+			if (first) {
 				wd.readText();
 			}
 			boolean flag = false;
@@ -273,13 +266,8 @@ public class SimulationBalancing {
 			weight = gf.getWeight(weight, map.get(i));
 			pai_Sita = Caluculater.calcPai_sita(this.weight_sita, weight); // 全てに対するπΘを計算
 			points[i] = pai_Sita;
-<<<<<<< Updated upstream
 			num += points[i];
-=======
-			num+= points[i];
->>>>>>> Stashed changes
 		}
-
 
 		for (int i = 0; i < size; i++) {// Pai_Sitaの完成
 			points[i] = points[i] / num;
@@ -330,19 +318,25 @@ public class SimulationBalancing {
 	public int putHand_simulataion(ArrayList<Long> map, GameField gf, WeightData wd) {
 		int size = map.size();
 		double[] points = ObjectPool.getArrayDouble();
-		double[] sita = null; // 重みの特徴ベクトル
-		double pai_Sita = 0;
+		int authenticationCode = gf.getAuthenticationCode_i();
+		double[] sita =wd.getWeight(gf.returnKey(), authenticationCode); // 重みの特徴ベクトル
+		double pai_Sita = 1;
 		double sum = 0;
 		int pos = 0;
-		int authenticationCode = gf.getAuthenticationCode_i();
-		for (int i = 0; i < size; i++) {// 一手一手の特徴を求める
-			weight = gf.getWeight(weight, map.get(i));// 重みの計算
-			sita = wd.getWeight(gf.returnKey(), authenticationCode);// 特徴ベクトルの計算
-			pai_Sita = Caluculater.calcPai_sita(sita, weight); // 全てに対するπΘを計算
-			if (InitSetting.DEBUGMODE_W)
-				debugWeight(map.get(i), weight, sita, pai_Sita);
-			points[i] = pai_Sita;
-			sum += pai_Sita;
+		if(sita == null){
+			for(int i= 0;i<size;i++){
+				points[i] = pai_Sita;
+				sum += pai_Sita;
+			}
+		}else{
+			for (int i = 0; i < size; i++) {// 一手一手の特徴を求める
+				weight = gf.getWeight(weight, map.get(i));// 重みの計算
+				pai_Sita = Caluculater.calcPai_sita(sita, weight); // 全てに対するπΘを計算
+				if (InitSetting.DEBUGMODE_W)
+					debugWeight(map.get(i), weight, sita, pai_Sita);
+				points[i] = pai_Sita;
+				sum += pai_Sita;
+			}
 		}
 		sum = sum * Math.random(); // ランダムで変数を入れる
 		for (int i = 0; i < size; i++) {
@@ -353,7 +347,9 @@ public class SimulationBalancing {
 			}
 		}
 		ObjectPool.releaseArrayDouble(points);
-		ObjectPool.releaseArrayDouble(sita);
+		if(sita != null){
+			ObjectPool.releaseArrayDouble(sita);
+		}
 		return pos;
 	}
 
