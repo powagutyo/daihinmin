@@ -91,7 +91,7 @@ public class Caluculater {
 	 */
 	public static double calcUCB_TUNED(double playout, GameField gf) {
 		double UCB = 0.0;
-		double visit = (double) gf.getVisit() +(double) gf.getVisit_sum();
+		double visit = (double) gf.getVisit();
 		double point = (double) gf.getWon();
 		double num = 0.0;
 		double winPro;
@@ -119,9 +119,6 @@ public class Caluculater {
 		 * UCBの計算式
 		 */
 		UCB = winPro + Math.sqrt(num * Math.log(playout) / visit);
-		if(Double.isNaN(UCB)){
-			System.out.println();
-		}
 		return UCB;
 	}
 }
