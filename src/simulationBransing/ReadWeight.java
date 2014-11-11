@@ -33,6 +33,7 @@ public class ReadWeight extends Thread {
 			, "./pai_Sita/x005text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/x015text_" + InitSetting.WEIGHTNUMBER + ".txt",
 			"./pai_Sita/x105text_" + InitSetting.WEIGHTNUMBER + ".txt", "./pai_Sita/x115text_" + InitSetting.WEIGHTNUMBER + ".txt"
 	};
+
 	public ReadWeight(WeightData wd) {// コンストラクタ
 		// TODO 自動生成されたコンストラクター・スタブ
 		this.wd = wd;
@@ -60,9 +61,10 @@ public class ReadWeight extends Thread {
 						splitWeight = message.split(",");
 						visit = Double.parseDouble(splitWeight[1]);
 						for (int j = 0; j < InitSetting.WEIGHTNUMBER; j++) {
-							weight[j] = Double.parseDouble(splitWeight[j + 1]) /visit;
+							weight[j] = Double.parseDouble(splitWeight[j + 2]) / visit;
 						}
-						//Caluculater.scailingPai_sita(weight, InitSetting.WEIGHTNUMBER);
+						// Caluculater.scailingPai_sita(weight,
+						// InitSetting.WEIGHTNUMBER);
 						wd.setWeight(i, Integer.parseInt(splitWeight[0])
 								, weight.clone());
 					}
@@ -72,7 +74,7 @@ public class ReadWeight extends Thread {
 				}
 			}
 			wd.setFinish(true);// 全ての読み込みが完了
-		}else if(InitSetting.READMODE == 1){
+		} else if (InitSetting.READMODE == 1) {
 			int size = textNames.length;
 			File file;
 			BufferedReader bf;
@@ -93,7 +95,9 @@ public class ReadWeight extends Thread {
 						splitWeight = message.split(",");
 
 						for (int j = 0; j < InitSetting.WEIGHTNUMBER; j++) {
-							weight[j] = Double.parseDouble(splitWeight[j + 1]) ;
+
+							weight[j] = Double.parseDouble(splitWeight[j + 1]);
+
 						}
 						wd.setWeight(i, Integer.parseInt(splitWeight[0])
 								, weight.clone());

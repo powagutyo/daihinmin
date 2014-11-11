@@ -27,9 +27,9 @@ public class SimulationBalancing {
 	/** 棋譜の読み込みデータの数 ***/
 	private static final int GAMERECORDDATA = 300;
 	/** 学習の回数 **/
-	private static final int LEARNINGNUMBER = 300;
+	private static final int LEARNINGNUMBER = 150;
 	/** 平均勾配の算出計算回数 **/
-	private static final int MEANGRADIENTNUMBER = 300;
+	private static final int MEANGRADIENTNUMBER = 150;
 	/** 学習率 **/
 	private static final double ARUFA = 1.0;
 
@@ -319,16 +319,22 @@ public class SimulationBalancing {
 		int size = map.size();
 		double[] points = ObjectPool.getArrayDouble();
 		int authenticationCode = gf.getAuthenticationCode_i();
-		double[] sita =wd.getWeight(gf.returnKey(), authenticationCode); // 重みの特徴ベクトル
+		double[] sita = wd.getWeight(gf.returnKey(), authenticationCode); // 重みの特徴ベクトル
 		double pai_Sita = 1;
 		double sum = 0;
+		long ONE = 1;
 		int pos = 0;
-		if(sita == null){
-			for(int i= 0;i<size;i++){
-				points[i] = pai_Sita;
-				sum += pai_Sita;
+		if (sita == null) {
+			for (int i = 0; i < size; i++) {
+				if((map.get(i) & ONE) >= 1){
+					points[i] = 0.5;
+					sum += 0.5;
+				}else{
+					points[i] = 1.0;
+					sum += 1.0;
+				}
 			}
-		}else{
+		} else {
 			for (int i = 0; i < size; i++) {// 一手一手の特徴を求める
 				weight = gf.getWeight(weight, map.get(i));// 重みの計算
 				pai_Sita = Caluculater.calcPai_sita(sita, weight); // 全てに対するπΘを計算
@@ -347,7 +353,7 @@ public class SimulationBalancing {
 			}
 		}
 		ObjectPool.releaseArrayDouble(points);
-		if(sita != null){
+		if (sita != null) {
 			ObjectPool.releaseArrayDouble(sita);
 		}
 		return pos;

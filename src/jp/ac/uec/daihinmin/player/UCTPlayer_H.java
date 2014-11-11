@@ -80,7 +80,6 @@ public class UCTPlayer_H extends BotSkeleton {
 			int myRank = Rules.heiminRank(this.rules()) - this.rank();
 
 			if (myRank > 0) {// 富豪か大富豪の時
-				// TODO 富豪や大富豪の送るカードを考える
 				sortHand = sortHand.remove(Card.JOKER);// JOKERを抜く
 
 				Cards notPairHand = sortHand;// 自分の手札をコピーする
@@ -107,7 +106,7 @@ public class UCTPlayer_H extends BotSkeleton {
 				notPairHand = notPairHand.remove(Card.C8);
 				notPairHand = notPairHand.remove(Card.H8);
 
-				notPairHand = notPairHand.extract(Cards.rankOver(Rank.TEN));// 7以下の数字かどうかを調べる
+				notPairHand = notPairHand.extract(Cards.rankOver(Rank.SEVEN));// 7以下の数字かどうかを調べる
 
 				if (notPairHand.size() >= sendCardNum) {// 複数枚存在する時
 					for (int i = 0; i < sendCardNum; i++) {// 弱い方から返す
@@ -133,6 +132,10 @@ public class UCTPlayer_H extends BotSkeleton {
 						}
 					}
 					notPairHand = notPairHand.remove(Card.D3);// ダイヤの3を抜く
+					notPairHand = notPairHand.remove(Card.S8);
+					notPairHand = notPairHand.remove(Card.D8);
+					notPairHand = notPairHand.remove(Card.C8);
+					notPairHand = notPairHand.remove(Card.H8);
 
 					if (notPairHand.size() >= sendCardNum) {// 複数枚存在する時
 						for (int i = 0; i < sendCardNum; i++) {// 弱い方から返す
@@ -140,6 +143,13 @@ public class UCTPlayer_H extends BotSkeleton {
 						}
 					} else {
 						sendCard = sendCard.remove(Card.D3);
+						sendCard = sendCard.remove(Card.C3);
+						sendCard = sendCard.remove(Card.S3);
+						sendCard = sendCard.remove(Card.H3);
+						sendCard = sendCard.remove(Card.S8);
+						sendCard = sendCard.remove(Card.D8);
+						sendCard = sendCard.remove(Card.C8);
+						sendCard = sendCard.remove(Card.H8);
 
 						for (int i = 0; i < sendCardNum; i++) {// 弱い方から返す
 							sendCard = sendCard.add(sortHand.get(i));
@@ -323,7 +333,6 @@ public class UCTPlayer_H extends BotSkeleton {
 
 		winCounter++;// ランク1つ下げる
 
-		System.out.println(playersInformation().getSeatOfPlayer(number));
 		fieldData.setWonPlayer(playersInformation().getSeatOfPlayer(number));// 勝ったプレイヤーを記憶させてあげる
 	}
 
@@ -354,10 +363,6 @@ public class UCTPlayer_H extends BotSkeleton {
 	public void playRejected(java.lang.Integer number, Meld playedMeld) {
 		super.playRejected(number, playedMeld);
 
-		if (number == this.number() && playedMeld != PASS) {
-			System.out.println();
-		}
-
 	}
 
 	@Override
@@ -367,25 +372,19 @@ public class UCTPlayer_H extends BotSkeleton {
 	public void gaveCards(java.lang.Integer playerFrom,
 			java.lang.Integer playerTo, Cards cards) {
 		super.gaveCards(playerFrom, playerTo, cards);
-
 		/**
 		 * 富豪、大富豪の場合はなぜかもらったカードがわからない
 		 *
 		 * 大貧民、貧民はもらったカードもわかる
-		 *
 		 **/
 		exchangeCard = true;
 		for (Card card : cards) {
 			System.out.println(card);
-
 		}
-
 		if (playerFrom == this.number()) {// カードを上げる側が自分の時
-
 			handOverCard = cards;// 自分が渡したカード記憶
 			// exchangedPlayer = playerTo; // 交換したプレイヤー番号を格納
 		}
-
 	}
 
 	/**
@@ -401,7 +400,9 @@ public class UCTPlayer_H extends BotSkeleton {
 
 		turn++;
 
-		firstUpdate();// 最初の更新を行う
+		if (myData == null) {
+			init();
+		}
 
 		if (mh.isFirst()) { // MakeHandの最初の初期化
 			mh.initHands(myData, fieldData);
@@ -414,15 +415,14 @@ public class UCTPlayer_H extends BotSkeleton {
 				doRenew = true;
 			}
 		}
+
 		if (playedMeld != null) {
 			if (playedMeld != PASS) {
-
 				if (myData.isYomikiri()) {// 読み切り実行時
 					if (number != this.number()) {// 違うプレイヤーが場にカードを出した時
 						myData.yomikiriInit(); // 読み切りを解除する
 					}
 				}
-
 				myData.removeCards(number, playedMeld.asCards()); // カードデータの更新
 
 				fieldData.takeOutHandCards(playersInformation()
@@ -463,7 +463,9 @@ public class UCTPlayer_H extends BotSkeleton {
 	@Override
 	public Meld requestingPlay() {
 		// try{
-		firstUpdate();// 最初の更新を行う
+		if (myData == null) {
+			init();
+		}
 		long start = System.currentTimeMillis();
 		if (dc.getWd().isFinish()) {// 重みの読み込みが終わった時
 			InitSetting.putHandMode = 2; // 重みを用いる戦術に変更
@@ -492,9 +494,14 @@ public class UCTPlayer_H extends BotSkeleton {
 		doRenew = false;// renewの初期化
 		beforeMeld = null;// beforeMeldの初期化
 		if (InitSetting.ONYOMIKIRI) {
-			myData.darkForce(this); // 読み切りを実行
-			if (myData.isYomikiri()) {// 読み切り状態の時
-				return myData.getYomikiriMelds();// 読み切りから手を出す
+			try{
+				myData.darkForce(this); // 読み切りを実行
+				if (myData.isYomikiri()) {// 読み切り状態の時
+					return myData.getYomikiriMelds();// 読み切りから手を出す
+				}
+
+			}catch(Exception e){
+
 			}
 		}
 
@@ -522,23 +529,10 @@ public class UCTPlayer_H extends BotSkeleton {
 	public void init() {
 		myData = new MyData(this);// MyDataの初期化
 		mh.init();
-
 		doRenew = false;
 		beforeMeld = null;
 		for (int i = 0; i < players; i++) {
 			grade[i] = 0;
 		}
 	}
-
-	/**
-	 * 最初のみ更新するメソッド
-	 */
-	public void firstUpdate() {
-
-		if (myData == null) {
-			init();
-		}
-
-	}
-
 }

@@ -123,7 +123,6 @@ public class GameField implements Cloneable {
 		initChild();
 		int counter = 0;
 		firstWonPlayer = 0;
-		canGrowUpTree = true;
 		for (boolean flag : fd.getWonPlayer()) {
 			if (flag)
 				firstWonPlayer = firstWonPlayer | (1 << counter);
@@ -1166,9 +1165,6 @@ public class GameField implements Cloneable {
 				break;
 			case RENEW:// renewの時
 				list = returnAllResult_renewMeld(list);// renew時に出す役を受ける
-				if (list == null) {
-					System.out.println();
-				}
 				break;
 			default:
 				System.out
@@ -1214,13 +1210,10 @@ public class GameField implements Cloneable {
 	 * @param leraning
 	 *            　学習フェーズを使用するかどうか
 	 * @param
+	 *
 	 */
 	public void useSimulationBarancing(boolean leraning, DataConstellation dc) {
 		ArrayList<Long> list = getPutHand(); // 複数の候補手を探す
-		if (list.size() == 0) {
-			System.out.println();
-			list = getPutHand();
-		}
 		if (list.get(0) == 0) {
 			passPlayer = passPlayer | (1 << turnPlayer);
 		} else {// PASS以外の時
@@ -1585,6 +1578,41 @@ public class GameField implements Cloneable {
 		result = result / (size * 10);
 		return result;
 	}
+	/**
+	 * 手札の評価方法その2
+	 * @return
+	 */
+	public int HandEvaliation() {
+		long hand = playersHands[turnPlayer];
+		int result = 0;
+		int size = Long.bitCount(hand);
+		int s = 0;
+		long num = rank_3;
+		long x = 0;
+		int value = -4;
+
+		for (int i = 0; i < 13; i++) {
+			x = hand & num;
+			s = Long.bitCount(x);
+			for (int j = 0; j < s; j++) {
+				if (i == 5) {
+					result += 9;
+				} else {
+					result += value * value;
+				}
+			}
+			// 更新部
+			num = num << 1;
+			if (!(i >= 4 && i <= 8)) {
+				value++;
+			}
+		}
+		if ((hand & ONE) != 0) {
+			result += value * value;
+		}
+		result = result / (size * 10);
+		return result;
+	}
 
 	/**
 	 * 重みベクトルの配列を返すメソッド 3～joker PASS 縛りを行える時 グループが出来るかどうか 階段が出来る時(joker抜き)
@@ -1721,8 +1749,8 @@ public class GameField implements Cloneable {
 				}
 				n = n >> 1;
 			}
-			counter++;
 		}
+		counter++;
 		return counter;
 	}
 
@@ -1745,7 +1773,7 @@ public class GameField implements Cloneable {
 					}
 					break;
 				}
-				n = n << 1;
+				n = n << ONE;
 			}
 		}
 		counter++;
@@ -1792,7 +1820,7 @@ public class GameField implements Cloneable {
 				size = 5;
 			}
 			size--;
-			weight[counter + size] = 1;
+			weight[counter + size] = 0;
 		}
 		counter += 5;
 		return counter;
@@ -1905,6 +1933,18 @@ public class GameField implements Cloneable {
 			rankPos = rankPos << 1;
 		}
 		return counter;
+	}
+
+	/**
+	 * HandModeの時のinit
+	 */
+	public void initHandMode() {
+		/*
+		 * visit_sum += visit;
+		 * visit = 0;
+		 * HaveChildNumber = 0;
+		 * canGrowUpTree = true;
+		 */
 	}
 
 	/**
@@ -2039,4 +2079,5 @@ public class GameField implements Cloneable {
 	public void setGrade(int grade) {
 		this.grade = grade;
 	}
+
 }

@@ -25,6 +25,8 @@ public class ObjectPool {
 
 	private static ArrayList<ArrayList<Long>> putHand;
 
+
+
 	public static int[] getWeight() {
 		if (weight == null) {
 			weight = new ArrayList<int[]>(32);
@@ -76,7 +78,7 @@ public class ObjectPool {
 
 	public static ArrayList<Long> getArrayLong() {
 		if (arrayLong == null) {
-			arrayLong = new ArrayList<ArrayList<Long>>(32);
+			arrayLong = new ArrayList<ArrayList<Long>>(128);
 		}
 		int size = arrayLong.size();
 		if (size == 0) {
@@ -161,7 +163,7 @@ public class ObjectPool {
 
 	public static long[] getPLayersHands() {
 		if (playersHands == null) {
-			playersHands = new ArrayList<long[]>(128);
+			playersHands = new ArrayList<long[]>(32);
 		}
 		int arraySize = playersHands.size();
 		if (arraySize == 0) {

@@ -107,7 +107,7 @@ public class CalcWeightRange extends Thread {
 
 								}
 							}
-							if (visit != 0) {
+							if (visit >= 5) {
 								for (int j = 0; j < InitSetting.WEIGHTNUMBER; j++) {
 									weight[j] = weight[j] / visit;
 									message += "," + weight[j];

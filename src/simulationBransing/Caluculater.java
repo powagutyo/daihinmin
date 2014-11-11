@@ -105,13 +105,13 @@ public class Caluculater {
 			num += (i + 1) * (i + 1) * gf.returnWinPoints(i + 1);
 		}
 
-		double x = num / (visit * 25.0);
+		double x = num / (visit* 25.0);
 
 		double y = winPro * winPro;
 
 		double z = Math.sqrt(2.0 * Math.log(playout) / visit);
 		num = x - y + z;
-
+		
 		if (num > 0.25) {
 			num = 0.25;
 		}
@@ -119,6 +119,9 @@ public class Caluculater {
 		 * UCBの計算式
 		 */
 		UCB = winPro + Math.sqrt(num * Math.log(playout) / visit);
+		if(Double.isNaN(UCB)){
+			System.out.println();
+		}
 		return UCB;
 	}
 }

@@ -3,7 +3,6 @@ package simulationBransing;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import object.InitSetting;
 import object.ObjectPool;
 import object.WeightData;
 
@@ -22,6 +21,7 @@ public class GameFieldTree {
 		visit = new int[2048];
 		childDepth = 1;
 	}
+
 	/**
 	 * UCBの値で手を決定する
 	 *
@@ -39,16 +39,9 @@ public class GameFieldTree {
 		ArrayList<GameField> gameList = childrenGameFeild.get(childNumber);
 		int size = gameList.size();
 		double[] points = ObjectPool.getArrayDouble();
-		if (InitSetting.putHandMode == 2) {
-			for (int i = 0; i < size; i++) {
-				points[i] = gameList.get(i).getUCB();
-				sum += points[i];
-			}
-		} else {
-			for (int i = 0; i < size; i++) {
-				points[i] = gameList.get(i).getUCB();
-				sum += points[i];
-			}
+		for (int i = 0; i < size; i++) {
+			points[i] = gameList.get(i).getUCB();
+			sum += points[i];
 		}
 		sum = sum * Math.random();
 		int pos = 0;
@@ -74,57 +67,49 @@ public class GameFieldTree {
 	 * @param winPoint
 	 */
 	public void upDateTree(ArrayList<Integer> order, int winPoint) {
-		GameField parentGF = null;
-		ArrayList<GameField> arrayGF = null;
-		int size = 0;
 		int orderSize = order.size();
-		int orderNum = 0;
-		int orderCounter = 0;
-		int pos = 0;
-		parentGF = this.parent.clone();
 
-		while (true) {
-			if (orderSize <= orderCounter)
-				break;
-			pos = parentGF.getHaveChildNumber();
-			arrayGF = childrenGameFeild.get(pos);
-			size = arrayGF.size();
-			orderNum = order.get(orderCounter);
-			visit[pos]++;
-			for (int i = 0; i < size; i++) {
-				if (orderNum == i) {
-					arrayGF.get(i).upDateUCB(visit[pos], winPoint, true);
-				} else {
-					arrayGF.get(i).upDateUCB(visit[pos], winPoint, false);
-				}
+		int orderCounter = 0;
+
+		comeBackUpdate(order, orderCounter, orderSize, 1, winPoint);
+	}
+
+	public void comeBackUpdate(ArrayList<Integer> order, int orderCounter, int orderSize, int pos, int winPoint) {
+		if (orderSize <= orderCounter)
+			return;
+		int size = childrenGameFeild.get(pos).size();
+		int orderNum = order.get(orderCounter);
+		visit[pos]++;
+		for (int i = 0; i < size; i++) {
+			if (orderNum == i) {
+				childrenGameFeild.get(pos).get(i).upDateUCB(visit[pos], winPoint, true);
+			} else {
+				childrenGameFeild.get(pos).get(i).upDateUCB(visit[pos], winPoint, false);
 			}
-			parentGF = null;
-			parentGF = arrayGF.get(orderNum);
-			arrayGF = null;
-			orderCounter++;
 		}
+
+		orderCounter++;
+
+		comeBackUpdate(order, orderCounter, orderSize, childrenGameFeild.get(pos).get(orderNum).getHaveChildNumber(), winPoint);
 	}
 
 	/**
 	 * すべてのGameFieldクラスをリリースする
 	 */
 	public void realseAllGameFeild() {
-		int size = childrenGameFeild.size();
 		int arraySize = 0;
-		ArrayList<GameField> ag;
+		int size = childrenGameFeild.size();
 		for (int i = 1; i <= size; i++) {
 			visit[i] = 0;
-			ag = null;
-			ag = childrenGameFeild.get(i);
-			arraySize = ag.size();
+			arraySize = childrenGameFeild.get(i).size();
 			for (int j = 0; j < arraySize; j++) {
-				ag.get(0).release();
-				ObjectPool.releaseGameField(ag.remove(0));
+				childrenGameFeild.get(i).get(0).release();
+				ObjectPool.releaseGameField(childrenGameFeild.get(i).remove(0));
 			}
-			ObjectPool.releaseGameFeilds(ag);
+			ObjectPool.releaseGameFeilds(childrenGameFeild.remove(i));
+
 		}
 		parent.release();
-		ObjectPool.releaseGameField(parent);
 		parent = null;
 		childDepth = 1;
 	}
@@ -134,8 +119,10 @@ public class GameFieldTree {
 		parent = p;
 		childDepth = 1;
 	}
+
 	/**
 	 * 親を成長させる
+	 *
 	 * @param parent
 	 * @param arrayLong
 	 * @param wd
@@ -166,10 +153,7 @@ public class GameFieldTree {
 	 */
 	public void initChildren(ArrayList<Integer> order, WeightData wd) {
 		int size = order.size();
-		GameField GF = this.parent.clone();
-		for (int i = 0; i < size; i++) {
-			GF = childrenGameFeild.get(GF.getHaveChildNumber()).get(order.get(i));
-		}
+		GameField GF = getChildGameFiled_clone(parent, order, 0, size);
 		ArrayList<GameField> gamelist = ObjectPool.getGameFields();
 		ArrayList<Long> putHand = GF.getPutHand();
 		size = putHand.size();
@@ -182,12 +166,33 @@ public class GameFieldTree {
 			gf.setFirstWonPlayer(parent.getFirstWonPlayer());
 			gamelist.add(gf);
 		}
+
+		size = order.size();
 		childrenGameFeild.put(childDepth, gamelist);
-		GF.setHaveChildNumber(childDepth); // どの子供を持っているかの番号を渡す
-		if(putHand != null){
+		getChildGameFiled(parent, order, 0, size, childDepth);
+		//GF.setHaveChildNumber(childDepth); // どの子供を持っているかの番号を渡す
+		if (putHand != null) {
 			ObjectPool.releasePutHand(putHand);
 		}
 		childDepth++;
+	}
+
+	public GameField getChildGameFiled_clone(GameField gf, ArrayList<Integer> order, int orderCounter, int size) {
+		if (size <= orderCounter) {
+			return gf.clone();
+		}
+		orderCounter++;
+
+		return getChildGameFiled_clone(childrenGameFeild.get(gf.getHaveChildNumber()).get(order.get(orderCounter - 1)), order, orderCounter, size);
+	}
+	public void getChildGameFiled(GameField gf, ArrayList<Integer> order, int orderCounter, int size, int haveChildNumber) {
+		if (size <= orderCounter) {
+			gf.setHaveChildNumber(haveChildNumber);
+			return;
+		}
+		orderCounter++;
+
+		getChildGameFiled(childrenGameFeild.get(gf.getHaveChildNumber()).get(order.get(orderCounter - 1)), order, orderCounter, size,haveChildNumber);
 	}
 
 	/**
@@ -198,23 +203,29 @@ public class GameFieldTree {
 	 */
 	public static GameField growUpGameField(GameField gf, long num, boolean first,
 			WeightData wd) {
-		ArrayList<Long> putHand = null;
-		while (true) {
-			gf.updatePlace(num);
+		gf.updatePlace(num);
+		if (gf.checkGoalPlayer()) { // 上がった人の判定
+			gf.setCanGrowUpTree(false);// 木を成長できないように変更する
+			return gf;
+		}
+		gf.endTurn();// ターン等々の処理
+
+		return isContinueUpdate(gf.getPutHand(), gf);
+	}
+
+	public static GameField isContinueUpdate(ArrayList<Long> putHand, GameField gf) {
+		if (putHand.size() <= 1) {
+			gf.updatePlace(putHand.get(0));
 			if (gf.checkGoalPlayer()) { // 上がった人の判定
 				gf.setCanGrowUpTree(false);// 木を成長できないように変更する
-				break;
+				ObjectPool.releasePutHand(putHand);
+				return gf;
 			}
 			gf.endTurn();// ターン等々の処理
-			putHand = gf.getPutHand();
-			if (putHand.size() == 1) {
-				num = putHand.get(0);
-				ObjectPool.releasePutHand(putHand);
-				putHand = null;
-			} else {
-				break;
-			}
+			ObjectPool.releasePutHand(putHand);
+			return isContinueUpdate(gf.getPutHand(), gf);
 		}
+		ObjectPool.releasePutHand(putHand);
 		return gf;
 	}
 
